@@ -209,7 +209,7 @@ class _ChallanScreenState extends State<ChallanScreen>
                       ),
                     ),
                     Text(
-                      "Retail Incentive",
+                      "Pending Challan",
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.white70,
@@ -390,7 +390,7 @@ class _ChallanScreenState extends State<ChallanScreen>
                 const Spacer(),
                 _StatChip(
                   icon: Icons.calendar_today_rounded,
-                  label: "Retail Incentive",
+                  label: "Pending Challan",
                   color: const Color(0xFF0891B2),
                 ),
               ],
