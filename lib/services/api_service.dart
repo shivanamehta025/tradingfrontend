@@ -270,6 +270,89 @@ class ApiService {
     }
   }
 
+  /// Approves a challan by calling the stored procedure with @what = 'approve'
+  /// Returns success message
+  static Future<Map<String, dynamic>> approveChallan(Map<String, dynamic> challanData) async {
+    try {
+      final token = await getToken();
+      if (token == null || token.isEmpty) {
+        throw Exception("Authentication required. Please login again.");
+      }
+
+      final url = "$baseUrl/api/challan/approve";
+      print("✅ CHALLAN APPROVE: Calling $url");
+
+      final res = await http.post(
+        Uri.parse(url),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $token",
+        },
+        body: jsonEncode(challanData),
+      ).timeout(const Duration(seconds: 30));
+
+      print("📡 CHALLAN APPROVE: Status ${res.statusCode}");
+
+      if (res.statusCode == 200) {
+        final body = jsonDecode(res.body) as Map<String, dynamic>;
+        if (body['success'] == true) {
+          print("✅ CHALLAN APPROVE: Success");
+          return body;
+        } else {
+          throw Exception(body['message'] ?? 'Approval failed');
+        }
+      }
+
+      throw Exception("Unexpected response: HTTP ${res.statusCode}");
+    } catch (e) {
+      print("❌ CHALLAN APPROVE ERROR: $e");
+      rethrow;
+    }
+  }
+
+  /// Rejects a challan by calling the stored procedure with @what = 'reject'
+  /// Returns success message
+  static Future<Map<String, dynamic>> rejectChallan(String sp462, String rejectRemark) async {
+    try {
+      final token = await getToken();
+      if (token == null || token.isEmpty) {
+        throw Exception("Authentication required. Please login again.");
+      }
+
+      final url = "$baseUrl/api/challan/reject";
+      print("❌ CHALLAN REJECT: Calling $url");
+
+      final res = await http.post(
+        Uri.parse(url),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $token",
+        },
+        body: jsonEncode({
+          "sp_462": sp462,
+          "rejectRemark": rejectRemark,
+        }),
+      ).timeout(const Duration(seconds: 30));
+
+      print("📡 CHALLAN REJECT: Status ${res.statusCode}");
+
+      if (res.statusCode == 200) {
+        final body = jsonDecode(res.body) as Map<String, dynamic>;
+        if (body['success'] == true) {
+          print("✅ CHALLAN REJECT: Success");
+          return body;
+        } else {
+          throw Exception(body['message'] ?? 'Rejection failed');
+        }
+      }
+
+      throw Exception("Unexpected response: HTTP ${res.statusCode}");
+    } catch (e) {
+      print("❌ CHALLAN REJECT ERROR: $e");
+      rethrow;
+    }
+  }
+
   static Future<void> logout(String token) async {
 
   try {

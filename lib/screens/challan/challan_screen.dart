@@ -96,7 +96,7 @@ class _ChallanScreenState extends State<ChallanScreen>
     return text;
   }
 
-  void _onEdit(Map<String, dynamic> row) {
+  void _onEdit(Map<String, dynamic> row) async {
     print("🔍 Edit clicked for row: $row");
     
     final sp462 = row['sp_462']?.toString() ?? '';
@@ -117,7 +117,7 @@ class _ChallanScreenState extends State<ChallanScreen>
       return;
     }
 
-    Navigator.push(
+    final result = await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => ChallanEditDetailsScreen(
@@ -126,6 +126,11 @@ class _ChallanScreenState extends State<ChallanScreen>
         ),
       ),
     );
+
+    // Refresh the list if challan was approved/rejected
+    if (result == true) {
+      _loadData();
+    }
   }
 
   @override
