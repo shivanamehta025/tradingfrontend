@@ -549,7 +549,10 @@ class _ChallanEditDetailsScreenState extends State<ChallanEditDetailsScreen> {
     });
 
     try {
-      final result = await ApiService.approveChallan(_data!);
+      // Prepare data for approval - map display fields back to sp_ fields
+      final approvalData = _prepareDataForSubmission(_data!);
+      
+      final result = await ApiService.approveChallan(approvalData);
       
       if (!mounted) return;
 
@@ -598,8 +601,11 @@ class _ChallanEditDetailsScreenState extends State<ChallanEditDetailsScreen> {
     });
 
     try {
+      // Prepare data for rejection - map display fields back to sp_ fields
+      final rejectionData = _prepareDataForSubmission(_data!);
+      
       final result = await ApiService.rejectChallan(
-        _data!,
+        rejectionData,
         remark,
       );
       
@@ -632,6 +638,24 @@ class _ChallanEditDetailsScreenState extends State<ChallanEditDetailsScreen> {
         });
       }
     }
+  }
+
+  /// Prepares data for submission by ensuring sp_462 exists
+  /// The Edit query returns 'unq' but approve/reject need 'sp_462'
+  Map<String, dynamic> _prepareDataForSubmission(Map<String, dynamic> data) {
+    final prepared = Map<String, dynamic>.from(data);
+    
+    // Map 'unq' to 'sp_462' if needed
+    if (prepared.containsKey('unq') && !prepared.containsKey('sp_462')) {
+      prepared['sp_462'] = prepared['unq'];
+    }
+    
+    // Ensure sp_462 exists
+    if (!prepared.containsKey('sp_462') || prepared['sp_462'] == null) {
+      prepared['sp_462'] = widget.sp462;
+    }
+    
+    return prepared;
   }
 
   Widget _buildSection({

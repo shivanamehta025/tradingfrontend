@@ -281,6 +281,7 @@ class ApiService {
 
       final url = "$baseUrl/api/challan/approve";
       print("✅ CHALLAN APPROVE: Calling $url");
+      print("📦 CHALLAN APPROVE: Data keys: ${challanData.keys.take(10).toList()}");
 
       final res = await http.post(
         Uri.parse(url),
@@ -292,6 +293,7 @@ class ApiService {
       ).timeout(const Duration(seconds: 30));
 
       print("📡 CHALLAN APPROVE: Status ${res.statusCode}");
+      print("📦 CHALLAN APPROVE: Response ${res.body}");
 
       if (res.statusCode == 200) {
         final body = jsonDecode(res.body) as Map<String, dynamic>;
@@ -300,6 +302,17 @@ class ApiService {
           return body;
         } else {
           throw Exception(body['message'] ?? 'Approval failed');
+        }
+      }
+
+      // Handle error responses
+      if (res.statusCode == 400 || res.statusCode == 500) {
+        try {
+          final body = jsonDecode(res.body) as Map<String, dynamic>;
+          final errorMsg = body['message'] ?? body['error'] ?? 'Request failed';
+          throw Exception(errorMsg);
+        } catch (e) {
+          throw Exception("Server error: ${res.body}");
         }
       }
 
@@ -328,6 +341,7 @@ class ApiService {
 
       final url = "$baseUrl/api/challan/reject";
       print("❌ CHALLAN REJECT: Calling $url");
+      print("📦 CHALLAN REJECT: Data keys: ${dataWithRemark.keys.take(10).toList()}");
 
       final res = await http.post(
         Uri.parse(url),
@@ -339,6 +353,7 @@ class ApiService {
       ).timeout(const Duration(seconds: 30));
 
       print("📡 CHALLAN REJECT: Status ${res.statusCode}");
+      print("📦 CHALLAN REJECT: Response ${res.body}");
 
       if (res.statusCode == 200) {
         final body = jsonDecode(res.body) as Map<String, dynamic>;
@@ -347,6 +362,17 @@ class ApiService {
           return body;
         } else {
           throw Exception(body['message'] ?? 'Rejection failed');
+        }
+      }
+
+      // Handle error responses
+      if (res.statusCode == 400 || res.statusCode == 500) {
+        try {
+          final body = jsonDecode(res.body) as Map<String, dynamic>;
+          final errorMsg = body['message'] ?? body['error'] ?? 'Request failed';
+          throw Exception(errorMsg);
+        } catch (e) {
+          throw Exception("Server error: ${res.body}");
         }
       }
 
