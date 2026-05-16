@@ -312,12 +312,19 @@ class ApiService {
 
   /// Rejects a challan by calling the stored procedure with @what = 'reject'
   /// Returns success message
-  static Future<Map<String, dynamic>> rejectChallan(String sp462, String rejectRemark) async {
+  static Future<Map<String, dynamic>> rejectChallan(
+    Map<String, dynamic> challanData,
+    String rejectRemark,
+  ) async {
     try {
       final token = await getToken();
       if (token == null || token.isEmpty) {
         throw Exception("Authentication required. Please login again.");
       }
+
+      // Add the reject remark to the challan data
+      final dataWithRemark = Map<String, dynamic>.from(challanData);
+      dataWithRemark['sp_581'] = rejectRemark;
 
       final url = "$baseUrl/api/challan/reject";
       print("❌ CHALLAN REJECT: Calling $url");
@@ -328,10 +335,7 @@ class ApiService {
           "Content-Type": "application/json",
           "Authorization": "Bearer $token",
         },
-        body: jsonEncode({
-          "sp_462": sp462,
-          "rejectRemark": rejectRemark,
-        }),
+        body: jsonEncode(dataWithRemark),
       ).timeout(const Duration(seconds: 30));
 
       print("📡 CHALLAN REJECT: Status ${res.statusCode}");

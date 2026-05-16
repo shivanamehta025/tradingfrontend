@@ -598,7 +598,10 @@ class _ChallanEditDetailsScreenState extends State<ChallanEditDetailsScreen> {
     });
 
     try {
-      final result = await ApiService.rejectChallan(widget.sp462, remark);
+      final result = await ApiService.rejectChallan(
+        _data!,
+        remark,
+      );
       
       if (!mounted) return;
 
@@ -727,11 +730,11 @@ class _RejectDialog extends StatefulWidget {
 }
 
 class _RejectDialogState extends State<_RejectDialog> {
-  final _controller = TextEditingController();
+  final _remarkController = TextEditingController();
 
   @override
   void dispose() {
-    _controller.dispose();
+    _remarkController.dispose();
     super.dispose();
   }
 
@@ -767,7 +770,7 @@ class _RejectDialogState extends State<_RejectDialog> {
           ),
           const SizedBox(height: 16),
           TextField(
-            controller: _controller,
+            controller: _remarkController,
             maxLines: 3,
             decoration: InputDecoration(
               hintText: "Enter rejection reason...",
@@ -787,7 +790,7 @@ class _RejectDialogState extends State<_RejectDialog> {
         ),
         ElevatedButton(
           onPressed: () {
-            if (_controller.text.trim().isEmpty) {
+            if (_remarkController.text.trim().isEmpty) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text("Please enter a rejection reason"),
@@ -796,7 +799,7 @@ class _RejectDialogState extends State<_RejectDialog> {
               );
               return;
             }
-            Navigator.pop(context, _controller.text.trim());
+            Navigator.pop(context, _remarkController.text.trim());
           },
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFFEF4444),
