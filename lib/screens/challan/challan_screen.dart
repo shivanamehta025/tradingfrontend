@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
+import 'challan_edit_details_screen.dart';
 
 class ChallanScreen extends StatefulWidget {
   const ChallanScreen({super.key});
@@ -96,16 +97,34 @@ class _ChallanScreenState extends State<ChallanScreen>
   }
 
   void _onEdit(Map<String, dynamic> row) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) {
-        return _EditSheet(
-          row: row,
-          onSaved: _loadData,
-        );
-      },
+    print("🔍 Edit clicked for row: $row");
+    
+    final sp462 = row['sp_462']?.toString() ?? '';
+    final challanNo = row['sp_468']?.toString() ?? '';
+
+    print("📋 sp_462: '$sp462', challanNo: '$challanNo'");
+
+    if (sp462.isEmpty) {
+      print("❌ sp_462 is empty! Available keys: ${row.keys.toList()}");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: const Color(0xFFE53935),
+          behavior: SnackBarBehavior.floating,
+          content: Text("Invalid challan ID. Available fields: ${row.keys.take(5).join(', ')}"),
+          duration: const Duration(seconds: 5),
+        ),
+      );
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ChallanEditDetailsScreen(
+          sp462: sp462,
+          challanNo: challanNo,
+        ),
+      ),
     );
   }
 

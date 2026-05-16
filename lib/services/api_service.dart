@@ -213,6 +213,63 @@ class ApiService {
     }
   }
 
+  /// Fetches complete challan details for editing
+  /// Calls the stored procedure with @what = 'Edit' and @sp_462
+  /// Returns a map with all challan fields
+  static Future<Map<String, dynamic>?> getChallanEditDetails(String sp462) async {
+    try {
+      final token = await getToken();
+      if (token == null || token.isEmpty) {
+        print("❌ CHALLAN EDIT: No token found");
+        throw Exception("Authentication required. Please login again.");
+      }
+
+      final url = "$baseUrl/api/challan/edit/$sp462";
+      print("🌐 CHALLAN EDIT: Calling $url");
+
+      final res = await http.get(
+        Uri.parse(url),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $token",
+        },
+      ).timeout(const Duration(seconds: 30));
+
+      print("📡 CHALLAN EDIT: Status ${res.statusCode}");
+      print("📦 CHALLAN EDIT: Body ${res.body}");
+
+      if (res.statusCode == 404) {
+        throw Exception("Challan not found. The record may have been deleted.");
+      }
+
+      if (res.statusCode == 401) {
+        throw Exception("Unauthorized. Please login again.");
+      }
+
+      if (res.statusCode == 500) {
+        final body = jsonDecode(res.body) as Map<String, dynamic>;
+        final errorMsg = body['error'] ?? body['message'] ?? 'Server error';
+        throw Exception("Server error: $errorMsg");
+      }
+
+      if (res.statusCode == 200) {
+        final body = jsonDecode(res.body) as Map<String, dynamic>;
+        if (body['success'] == true && body['data'] is Map) {
+          print("✅ CHALLAN EDIT: Data received successfully");
+          return Map<String, dynamic>.from(body['data'] as Map);
+        } else {
+          final errorMsg = body['message'] ?? 'Invalid response format';
+          throw Exception(errorMsg);
+        }
+      }
+
+      throw Exception("Unexpected response: HTTP ${res.statusCode}");
+    } catch (e) {
+      print("❌ CHALLAN EDIT ERROR: $e");
+      rethrow;
+    }
+  }
+
   static Future<void> logout(String token) async {
 
   try {
