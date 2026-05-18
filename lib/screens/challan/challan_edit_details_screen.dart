@@ -309,6 +309,7 @@ class _ChallanEditDetailsScreenState extends State<ChallanEditDetailsScreen> {
               children: [
                 _buildSection(
                   title: "Basic Information",
+                  summary: "Customer Name: ${_formatValue(_data!['customername'])}",
                   icon: Icons.info_outline_rounded,
                   iconColor: const Color(0xFF3B82F6),
                   fields: [
@@ -318,12 +319,15 @@ class _ChallanEditDetailsScreenState extends State<ChallanEditDetailsScreen> {
                     _FieldData("Model Name", _formatValue(_data!['modelname'])),
                     _FieldData("Variant Name", _formatValue(_data!['variantname'])),
                     _FieldData("Color Name", _formatValue(_data!['colorname'])),
+                    _FieldData("Sales Consultant", _formatValue(_data!['scname'])),
+                    _FieldData("Team Leader", _formatValue(_data!['tlname'])),
                     _FieldData("VIN No", _formatValue(_data!['vinno'])),
                     _FieldData("Engine No", _formatValue(_data!['engineno'])),
                   ],
                 ),
                 _buildSection(
                   title: "Pricing Details",
+                  summary: "Ex-Showroom: ${_formatValue(_data!['ExshowRoomPrice'])}",
                   icon: Icons.attach_money_rounded,
                   iconColor: const Color(0xFF10B981),
                   fields: [
@@ -359,6 +363,7 @@ class _ChallanEditDetailsScreenState extends State<ChallanEditDetailsScreen> {
                 ),
                 _buildSection(
                   title: "RTO Details",
+                  summary: "RTO Amount: ${_formatValue(_data!['RTOAmount'])}",
                   icon: Icons.directions_car_rounded,
                   iconColor: const Color(0xFF8B5CF6),
                   fields: [
@@ -378,6 +383,7 @@ class _ChallanEditDetailsScreenState extends State<ChallanEditDetailsScreen> {
                 ),
                 _buildSection(
                   title: "Tax Details",
+                  summary: "Subtotal: ${_formatValue(_data!['subtotal'])}",
                   icon: Icons.receipt_rounded,
                   iconColor: const Color(0xFFEC4899),
                   fields: [
@@ -393,6 +399,7 @@ class _ChallanEditDetailsScreenState extends State<ChallanEditDetailsScreen> {
                 ),
                 _buildSection(
                   title: "Insurance Details",
+                  summary: "Insurance Amt: ${_formatValue(_data!['insamt'])}",
                   icon: Icons.security_rounded,
                   iconColor: const Color(0xFF06B6D4),
                   fields: [
@@ -421,6 +428,7 @@ class _ChallanEditDetailsScreenState extends State<ChallanEditDetailsScreen> {
                 ),
                 _buildSection(
                   title: "Financial Details",
+                  summary: "Net Amount: ${_formatValue(_data!['netamount'])}",
                   icon: Icons.account_balance_rounded,
                   iconColor: const Color(0xFFEF4444),
                   fields: [
@@ -661,10 +669,14 @@ class _ChallanEditDetailsScreenState extends State<ChallanEditDetailsScreen> {
 
   Widget _buildSection({
     required String title,
+    String? summary,
     required IconData icon,
     required Color iconColor,
     required List<_FieldData> fields,
   }) {
+    final summaryText = summary == null || summary == '-' ? null : summary;
+    final summaryMaxWidth = MediaQuery.of(context).size.width < 700 ? 160.0 : 520.0;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 1),
       decoration: const BoxDecoration(
@@ -694,6 +706,32 @@ class _ChallanEditDetailsScreenState extends State<ChallanEditDetailsScreen> {
               color: _textDark,
             ),
           ),
+          trailing: summaryText == null
+              ? null
+              : Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ConstrainedBox(
+                      constraints: BoxConstraints(maxWidth: summaryMaxWidth),
+                      child: Text(
+                        summaryText,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.right,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: _textDark,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    const Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: Color(0xFF334155),
+                    ),
+                  ],
+              ),
           initiallyExpanded: title == "Basic Information",
           children: [
             Container(
