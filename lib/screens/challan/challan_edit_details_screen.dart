@@ -642,17 +642,25 @@ class _ChallanEditDetailsScreenState extends State<ChallanEditDetailsScreen> {
 
   /// Prepares data for submission by ensuring sp_462 exists
 Map<String, dynamic> _prepareDataForSubmission(Map<String, dynamic> data) {
-  final prepared = Map<String, dynamic>.from(data);
+  final prepared = <String, dynamic>{};
 
   // Required
-  prepared['sp_462'] = data['unq'];
+  prepared['sp_462'] = data['unq']?.toString() ?? '';
 
-  // FIX FOR SQL ERROR
-  prepared['sp_504'] = 0;
-  prepared['sp_517'] = 0;
+  // Convert all values to strings and handle arrays
+  data.forEach((key, value) {
+    if (key == 'Amount' || value is List) {
+      // Skip array fields or convert to "0"
+      prepared[key] = '0';
+    } else if (value == null) {
+      prepared[key] = '';
+    } else {
+      prepared[key] = value.toString();
+    }
+  });
 
-  // REMOVE ARRAY FIELD
-  prepared.remove('Amount');
+  // Ensure sp_462 is set correctly
+  prepared['sp_462'] = data['unq']?.toString() ?? '';
 
   return prepared;
 }
