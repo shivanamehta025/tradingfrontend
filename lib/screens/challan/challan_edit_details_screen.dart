@@ -641,22 +641,21 @@ class _ChallanEditDetailsScreenState extends State<ChallanEditDetailsScreen> {
   }
 
   /// Prepares data for submission by ensuring sp_462 exists
-  /// The Edit query returns 'unq' but approve/reject need 'sp_462'
-  Map<String, dynamic> _prepareDataForSubmission(Map<String, dynamic> data) {
-    final prepared = Map<String, dynamic>.from(data);
-    
-    // Map 'unq' to 'sp_462' if needed
-    if (prepared.containsKey('unq') && !prepared.containsKey('sp_462')) {
-      prepared['sp_462'] = prepared['unq'];
-    }
-    
-    // Ensure sp_462 exists
-    if (!prepared.containsKey('sp_462') || prepared['sp_462'] == null) {
-      prepared['sp_462'] = widget.sp462;
-    }
-    
-    return prepared;
-  }
+Map<String, dynamic> _prepareDataForSubmission(Map<String, dynamic> data) {
+  final prepared = Map<String, dynamic>.from(data);
+
+  // Required
+  prepared['sp_462'] = data['unq'];
+
+  // FIX FOR SQL ERROR
+  prepared['sp_504'] = 0;
+  prepared['sp_517'] = 0;
+
+  // REMOVE ARRAY FIELD
+  prepared.remove('Amount');
+
+  return prepared;
+}
 
   Widget _buildSection({
     required String title,
