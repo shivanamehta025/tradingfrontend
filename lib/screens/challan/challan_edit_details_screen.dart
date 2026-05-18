@@ -642,14 +642,21 @@ class _ChallanEditDetailsScreenState extends State<ChallanEditDetailsScreen> {
 
   /// Prepares data for submission by ensuring sp_462 exists
   Map<String, dynamic> _prepareDataForSubmission(Map<String, dynamic> data) {
-    // Return the data as-is since the backend expects the same format
-    // that was returned from the edit endpoint
     print("📦 Preparing data for submission");
     print("📦 Data keys: ${data.keys.toList()}");
     print("📦 sp_462 value: ${data['sp_462']}");
     print("📦 unq value: ${data['unq']}");
     
-    return data;
+    // Create a copy of the data
+    final prepared = Map<String, dynamic>.from(data);
+    
+    // Ensure sp_462 is set from unq if not already present
+    if (prepared['sp_462'] == null && prepared['unq'] != null) {
+      prepared['sp_462'] = prepared['unq'];
+      print("✅ Set sp_462 from unq: ${prepared['sp_462']}");
+    }
+    
+    return prepared;
   }
 
   Widget _buildSection({
