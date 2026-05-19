@@ -65,6 +65,26 @@ class ApiService {
     };
   }
 
+  static Future<String?> getUserId() =>
+      _storage.read(key: "userId");
+
+  static Future<String> getClientIp() async {
+    try {
+      final res = await http
+          .get(Uri.parse("https://api.ipify.org?format=json"))
+          .timeout(const Duration(seconds: 10));
+
+      if (res.statusCode == 200) {
+        final body = jsonDecode(res.body) as Map<String, dynamic>;
+        return body["ip"]?.toString() ?? "";
+      }
+    } catch (e) {
+      print("CLIENT IP ERROR: $e");
+    }
+
+    return "";
+  }
+
   static Future<void> clearSession() async {
     await Future.wait([
       _storage.delete(key: "token"),

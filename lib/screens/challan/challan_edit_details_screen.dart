@@ -21,6 +21,7 @@ class _ChallanEditDetailsScreenState extends State<ChallanEditDetailsScreen> {
   String? _error;
   Map<String, dynamic>? _data;
   bool _processing = false;
+  String loggedInUserId = '';
 
   static const Color _primary = Color(0xFF1A56DB);
   static const Color _secondary = Color(0xFF3B82F6);
@@ -29,11 +30,22 @@ class _ChallanEditDetailsScreenState extends State<ChallanEditDetailsScreen> {
   static const Color _textDark = Color(0xFF1E293B);
   static const Color _textMid = Color(0xFF64748B);
 
-  @override
-  void initState() {
-    super.initState();
-    _loadData();
-  }
+@override
+void initState() {
+  super.initState();
+  _initializePage();
+}
+
+Future<void> _initializePage() async {
+
+  String? uid = await ApiService.getUserId();
+
+  loggedInUserId = uid ?? '';
+
+  print("LOGIN USER ID : $loggedInUserId");
+
+  _loadData();
+}
 
   Future<void> _loadData() async {
     setState(() {
@@ -559,7 +571,10 @@ class _ChallanEditDetailsScreenState extends State<ChallanEditDetailsScreen> {
     try {
       // Prepare data for approval - map display fields back to sp_ fields
       final approvalData = _prepareDataForSubmission(_data!);
-      
+      approvalData['loginUserId'] = loggedInUserId;
+      approvalData['sp_583'] = loggedInUserId;
+      approvalData['sp_584'] = await ApiService.getClientIp();
+
       final result = await ApiService.approveChallan(approvalData);
       
       if (!mounted) return;
@@ -611,7 +626,10 @@ class _ChallanEditDetailsScreenState extends State<ChallanEditDetailsScreen> {
     try {
       // Prepare data for rejection - map display fields back to sp_ fields
       final rejectionData = _prepareDataForSubmission(_data!);
-      
+      rejectionData['loginUserId'] = loggedInUserId;
+      rejectionData['sp_587'] = loggedInUserId;
+      rejectionData['sp_588'] = await ApiService.getClientIp();
+
       final result = await ApiService.rejectChallan(
         rejectionData,
         remark,
