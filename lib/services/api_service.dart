@@ -85,6 +85,28 @@ class ApiService {
     return "";
   }
 
+  static Future<Set<String>> getNotifiedPendingChallanIds() async {
+    final raw = await _storage.read(key: "notifiedPendingChallanIds");
+    if (raw == null || raw.isEmpty) return {};
+
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is List) {
+        return decoded.map((e) => e.toString()).toSet();
+      }
+    } catch (e) {
+      print("READ NOTIFIED CHALLAN IDS ERROR: $e");
+    }
+
+    return {};
+  }
+
+  static Future<void> saveNotifiedPendingChallanIds(Set<String> ids) =>
+      _storage.write(
+        key: "notifiedPendingChallanIds",
+        value: jsonEncode(ids.toList()),
+      );
+
   static Future<void> clearSession() async {
     await Future.wait([
       _storage.delete(key: "token"),
@@ -93,6 +115,7 @@ class ApiService {
       _storage.delete(key: "userEmail"),
       _storage.delete(key: "databaseName"),
       _storage.delete(key: "companyCode"),
+      _storage.delete(key: "notifiedPendingChallanIds"),
     ]);
   }
 

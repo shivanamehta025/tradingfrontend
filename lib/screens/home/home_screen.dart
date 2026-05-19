@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
+import '../../services/notification_service.dart';
 import '../auth/login_screen.dart';
 import '../challan/challan_screen.dart';
 
@@ -12,7 +15,99 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
+  Timer? _pendingChallanTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkPendingChallanNotifications();
+    });
+    _pendingChallanTimer = Timer.periodic(
+      const Duration(minutes: 1),
+      (_) => _checkPendingChallanNotifications(),
+    );
+  }
+
+  @override
+  void dispose() {
+    _pendingChallanTimer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _checkPendingChallanNotifications();
+    }
+  }
+
+  Future<void> _checkPendingChallanNotifications() async {
+    try {
+      final pendingChallans = await ApiService.getChallanRetailIncentive();
+      final count = pendingChallans.length;
+
+      if (!mounted || count == 0) return;
+
+      final alreadyNotified = await ApiService.getNotifiedPendingChallanIds();
+      final newPendingChallans = pendingChallans.where((row) {
+        return !alreadyNotified.contains(_pendingChallanId(row));
+      }).toList();
+
+      if (newPendingChallans.isEmpty) return;
+
+      await NotificationService.showPendingChallanNotifications(
+        newPendingChallans,
+        totalCount: count,
+      );
+
+      await ApiService.saveNotifiedPendingChallanIds({
+        ...alreadyNotified,
+        ...pendingChallans.map(_pendingChallanId),
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: const Color(0xFF1A56DB),
+          duration: const Duration(seconds: 6),
+          content: Text(
+            "$count Pending Challan",
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+          action: SnackBarAction(
+            label: "View",
+            textColor: Colors.white,
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const ChallanScreen(),
+                ),
+              );
+            },
+          ),
+        ),
+      );
+    } catch (e) {
+      print("PENDING CHALLAN NOTIFICATION ERROR: $e");
+    }
+  }
+
+  String _pendingChallanId(Map<String, dynamic> row) {
+    final id = row['sp_462']?.toString();
+    if (id != null && id.isNotEmpty) return id;
+
+    return [
+      row['sp_468']?.toString() ?? '',
+      row['sp_469']?.toString() ?? '',
+      row['date']?.toString() ?? '',
+    ].join('|');
+  }
+
 Future<void> _logout() async {
 
   final confirm = await showDialog<bool>(
