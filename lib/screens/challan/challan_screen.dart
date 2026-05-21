@@ -25,6 +25,8 @@ class _ChallanScreenState extends State<ChallanScreen>
   static const Color _cardBg = Colors.white;
   static const Color _textDark = Color(0xFF1E293B);
   static const Color _textMid = Color(0xFF64748B);
+  static const Color _gridBorder = Color(0xFFC7D2FE);
+  static const Color _gridHeaderBorder = Color(0xFF93C5FD);
 
   static const List<_ColDef> _columns = [
     _ColDef(key: 'date', label: 'Date', flex: 3),
@@ -427,6 +429,10 @@ class _ChallanScreenState extends State<ChallanScreen>
                 decoration: BoxDecoration(
                   color: _cardBg,
                   borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: _gridBorder,
+                    width: 1.2,
+                  ),
                   boxShadow: [
                     BoxShadow(
                       color: _primary.withValues(alpha: 0.08),
@@ -461,20 +467,34 @@ class _ChallanScreenState extends State<ChallanScreen>
             _primary,
           ],
         ),
+        border: Border(
+          bottom: BorderSide(
+            color: _gridBorder,
+            width: 1.2,
+          ),
+        ),
       ),
       child: Row(
         children: [
-          ..._columns.map(
-            (col) {
-              return Expanded(
-                flex: col.flex,
+          for (var i = 0; i < _columns.length; i++)
+            Expanded(
+              flex: _columns[i].flex,
+              child: Container(
+                decoration: const BoxDecoration(
+                  border: Border(
+                    right: BorderSide(
+                      color: _gridHeaderBorder,
+                      width: 1,
+                    ),
+                  ),
+                ),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 10,
                     vertical: 13,
                   ),
                   child: Text(
-                    col.label,
+                    _columns[i].label,
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w700,
@@ -482,9 +502,8 @@ class _ChallanScreenState extends State<ChallanScreen>
                     ),
                   ),
                 ),
-              );
-            },
-          ),
+              ),
+            ),
           const SizedBox(
             width: 72,
             child: Padding(
@@ -515,7 +534,7 @@ class _ChallanScreenState extends State<ChallanScreen>
         return const Divider(
           height: 1,
           thickness: 1,
-          color: Color(0xFFEFF2FF),
+          color: _gridBorder,
         );
       },
       itemBuilder: (context, index) {
@@ -578,6 +597,10 @@ class _StatChip extends StatelessWidget {
 }
 
 class _DataRow extends StatelessWidget {
+  static const Color _borderColor = Color(0xFFC7D2FE);
+  static const Color _evenRowColor = Colors.white;
+  static const Color _oddRowColor = Color(0xFFEAF1FF);
+
   final Map<String, dynamic> row;
   final List<_ColDef> columns;
   final bool isEven;
@@ -595,7 +618,7 @@ class _DataRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: isEven ? Colors.white : const Color(0xFFF5F8FF),
+      color: isEven ? _evenRowColor : _oddRowColor,
       child: Row(
         children: [
           ...columns.map((col) {
@@ -604,90 +627,116 @@ class _DataRow extends StatelessWidget {
 
             return Expanded(
               flex: col.flex,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 12,
+              child: Container(
+                decoration: const BoxDecoration(
+                  border: Border(
+                    right: BorderSide(
+                      color: _borderColor,
+                      width: 1,
+                    ),
+                  ),
                 ),
-                child: isChallanNo
-                    ? Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF1A56DB)
-                              .withValues(alpha: 0.08),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 12,
+                  ),
+                  child: isChallanNo
+                      ? Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1A56DB)
+                                .withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: const Color(0xFFBFDBFE),
+                            ),
+                          ),
+                          child: Text(
+                            value,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF1A56DB),
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        )
+                      : Text(
                           value,
-                          style: const TextStyle(
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 2,
+                          style: TextStyle(
                             fontSize: 12,
-                            color: Color(0xFF1A56DB),
-                            fontWeight: FontWeight.w700,
+                            fontWeight: col.key == 'date'
+                                ? FontWeight.w600
+                                : FontWeight.w700,
+                            color: col.key == 'date'
+                                ? const Color(0xFF475569)
+                                : const Color(0xFF1E293B),
                           ),
                         ),
-                      )
-                    : Text(
-                        value,
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 2,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: col.key == 'date'
-                              ? const Color(0xFF475569)
-                              : const Color(0xFF1E293B),
-                        ),
-                      ),
+                ),
               ),
             );
           }),
           SizedBox(
             width: 72,
-            child: Center(
-              child: GestureDetector(
-                onTap: onEdit,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
+            child: Container(
+              decoration: const BoxDecoration(
+                border: Border(
+                  right: BorderSide(
+                    color: _borderColor,
+                    width: 1,
                   ),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [
-                        Color(0xFF1A56DB),
-                        Color(0xFF3B82F6),
+                ),
+              ),
+              child: Center(
+                child: GestureDetector(
+                  onTap: onEdit,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [
+                          Color(0xFF1A56DB),
+                          Color(0xFF3B82F6),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF1A56DB)
+                              .withValues(alpha: 0.3),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
                       ],
                     ),
-                    borderRadius: BorderRadius.circular(8),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF1A56DB)
-                            .withValues(alpha: 0.3),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.edit_rounded,
-                        size: 12,
-                        color: Colors.white,
-                      ),
-                      SizedBox(width: 4),
-                      Text(
-                        "Edit",
-                        style: TextStyle(
-                          fontSize: 11,
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.edit_rounded,
+                          size: 12,
                           color: Colors.white,
-                          fontWeight: FontWeight.w600,
                         ),
-                      ),
-                    ],
+                        SizedBox(width: 4),
+                        Text(
+                          "Edit",
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

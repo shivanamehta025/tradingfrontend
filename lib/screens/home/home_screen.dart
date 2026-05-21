@@ -69,29 +69,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         ...pendingChallans.map(_pendingChallanId),
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: const Color(0xFF1A56DB),
-          duration: const Duration(seconds: 6),
-          content: Text(
-            "$count Pending Challan",
-            style: const TextStyle(fontWeight: FontWeight.w600),
-          ),
-          action: SnackBarAction(
-            label: "View",
-            textColor: Colors.white,
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const ChallanScreen(),
-                ),
-              );
-            },
-          ),
-        ),
-      );
     } catch (e) {
       print("PENDING CHALLAN NOTIFICATION ERROR: $e");
     }

@@ -22,7 +22,7 @@ class NotificationService {
       macOS: darwinSettings,
     );
 
-    await _notifications.initialize(settings);
+    await _notifications.initialize(settings: settings);
 
     await _notifications
         .resolvePlatformSpecificImplementation<
@@ -33,9 +33,9 @@ class NotificationService {
   }
 
   static Future<void> showPendingChallanNotifications(
-    List<Map<String, dynamic>> rows,
-    {int? totalCount}
-  ) async {
+    List<Map<String, dynamic>> rows, {
+    int? totalCount,
+  }) async {
     await initialize();
 
     final count = totalCount ?? rows.length;
@@ -56,23 +56,10 @@ class NotificationService {
     );
 
     await _notifications.show(
-      1000,
-      '$count Pending Challan',
-      'Open MyAutoShop to review pending challans',
-      details,
+      id: 1000,
+      title: '$count Pending Challan',
+      body: 'Open MyAutoShop to review pending challans',
+      notificationDetails: details,
     );
-
-    for (var i = 0; i < rows.length; i++) {
-      final row = rows[i];
-      final challanNo = row['sp_468']?.toString() ?? '-';
-      final customer = row['sp_469']?.toString() ?? 'Customer';
-
-      await _notifications.show(
-        1001 + i,
-        'Pending Challan $challanNo',
-        customer,
-        details,
-      );
-    }
   }
 }

@@ -10,9 +10,9 @@ class NotificationService {
   }
 
   static Future<void> showPendingChallanNotifications(
-    List<Map<String, dynamic>> rows,
-    {int? totalCount}
-  ) async {
+    List<Map<String, dynamic>> rows, {
+    int? totalCount,
+  }) async {
     await initialize();
 
     final count = totalCount ?? rows.length;
@@ -23,16 +23,5 @@ class NotificationService {
       body: 'Open MyAutoShop to review pending challans',
       icon: 'icons/Icon-192.png',
     );
-
-    for (final row in rows) {
-      final challanNo = row['sp_468']?.toString() ?? '-';
-      final customer = row['sp_469']?.toString() ?? 'Customer';
-
-      html.Notification(
-        'Pending Challan $challanNo',
-        body: customer,
-        icon: 'icons/Icon-192.png',
-      );
-    }
   }
 }
