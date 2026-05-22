@@ -36,8 +36,6 @@ class _ChallanEditDetailsScreenState extends State<ChallanEditDetailsScreen> {
   static const Color _textDark = Color(0xFF1E293B);
   static const Color _textMid = Color(0xFF64748B);
   static const Color _rowBorder = Color(0xFFC7D2FE);
-  static const Color _evenRowColor = Colors.white;
-  static const Color _oddRowColor = Color(0xFFEAF1FF);
 
   @override
   void initState() {
@@ -550,6 +548,10 @@ class _ChallanEditDetailsScreenState extends State<ChallanEditDetailsScreen> {
         onTap: () {
           setState(() {
             _isRadioSelected = !_isRadioSelected;
+            if (!_isRadioSelected) {
+              _checkedRejectFields.clear();
+              _rejectRemarkController.clear();
+            }
           });
         },
         borderRadius: BorderRadius.circular(10),
@@ -557,21 +559,31 @@ class _ChallanEditDetailsScreenState extends State<ChallanEditDetailsScreen> {
           padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
           child: Row(
             children: [
-              SizedBox(
-                width: 32,
-                height: 32,
-                child: Radio<bool>(
-                  value: true,
-                  groupValue: _isRadioSelected,
-                  onChanged: (val) {
-                    setState(() {
-                      _isRadioSelected = val ?? false;
-                    });
-                  },
-                  activeColor: _primary,
+              Container(
+                width: 22,
+                height: 22,
+                margin: const EdgeInsets.symmetric(horizontal: 5),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: _isRadioSelected ? _primary : _textMid.withValues(alpha: 0.4),
+                    width: 2,
+                  ),
+                ),
+                child: Center(
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    curve: Curves.easeOutBack,
+                    width: _isRadioSelected ? 10 : 0,
+                    height: _isRadioSelected ? 10 : 0,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: _primary,
+                    ),
+                  ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 14),
               const Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
