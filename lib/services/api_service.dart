@@ -33,6 +33,7 @@ class ApiService {
   static Future<void> saveUserSession({
     required String token,
     required String userId,
+    required String utg,
     required String userName,
     required String userEmail,
     required String databaseName,
@@ -41,6 +42,7 @@ class ApiService {
     await Future.wait([
       _storage.write(key: "token", value: token),
       _storage.write(key: "userId", value: userId),
+      _storage.write(key: "utg", value: utg),
       _storage.write(key: "userName", value: userName),
       _storage.write(key: "userEmail", value: userEmail),
       _storage.write(key: "databaseName", value: databaseName),
@@ -56,6 +58,7 @@ class ApiService {
     return {
       "token": token,
       "userId": await _storage.read(key: "userId") ?? "",
+      "utg": await _storage.read(key: "utg") ?? "",
       "userName": await _storage.read(key: "userName") ?? "",
       "userEmail": await _storage.read(key: "userEmail") ?? "",
       "databaseName":
@@ -111,6 +114,7 @@ class ApiService {
     await Future.wait([
       _storage.delete(key: "token"),
       _storage.delete(key: "userId"),
+      _storage.delete(key: "utg"),
       _storage.delete(key: "userName"),
       _storage.delete(key: "userEmail"),
       _storage.delete(key: "databaseName"),
@@ -501,6 +505,8 @@ class ApiService {
             token: data['token'],
             userId:
                 data['userId']?.toString() ?? userId,
+            utg:
+                data['utg']?.toString() ?? "",
             userName:
                 data['name']?.toString() ?? userId,
             userEmail:

@@ -16,12 +16,13 @@ class _LoginScreenState extends State<LoginScreen> {
   bool isLoading        = false;
   bool obscure          = true;
   bool isValidatingCode = false;
-bool? companyValid;
+  bool? companyValid;
 
 String databaseName = "";
 String companyName = "";
+String utg = "";  
 
-  static const Color kRed      = Color(0xFF1565C0); // Blue
+static const Color kRed      = Color(0xFF1565C0); // Blue
 static const Color kRedLight = Color(0xFF42A5F5); // Light Blue
 static const Color kRedDark  = Color(0xFF0D47A1); // Dark Blue
 
@@ -95,6 +96,7 @@ print("USER ID       : ${passwordCtrl.text.trim()}");
         userEmail:    res['email']?.toString()        ?? '',
         databaseName: res['databaseName']?.toString() ?? databaseName,
         companyCode:  companyCodeCtrl.text.trim(),
+        utg:          res["utg"].toString(),
       );
       Navigator.pushReplacement(
         context,
@@ -105,6 +107,7 @@ print("USER ID       : ${passwordCtrl.text.trim()}");
           ),
         ),
       );
+      print(res["utg"].toString());
     } else {
       // Read the actual message from the server response
       final msg = res?['message']?.toString() ?? "Invalid User ID or Password";
