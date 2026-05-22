@@ -23,6 +23,10 @@ class _ChallanEditDetailsScreenState extends State<ChallanEditDetailsScreen> {
   bool _processing = false;
   String loggedInUserId = '';
   String? _expandedSection = 'Basic Information';
+  final Set<String> _checkedRejectFields = {};
+  final List<String> _rejectFieldOrder = [];
+  final Map<String, String> _fieldKeyToLabel = {};
+  final TextEditingController _rejectRemarkController = TextEditingController();
 
   static const Color _primary = Color(0xFF1A56DB);
   static const Color _secondary = Color(0xFF3B82F6);
@@ -40,6 +44,51 @@ class _ChallanEditDetailsScreenState extends State<ChallanEditDetailsScreen> {
     _initializePage();
   }
 
+  @override
+  void dispose() {
+    _rejectRemarkController.dispose();
+    super.dispose();
+  }
+
+  void _initRejectFieldKeys(List<_SectionDef> sections) {
+    _rejectFieldOrder.clear();
+    _fieldKeyToLabel.clear();
+    for (final section in sections) {
+      for (final field in section.fields) {
+        _rejectFieldOrder.add(field.fieldKey);
+        _fieldKeyToLabel[field.fieldKey] = field.label;
+      }
+    }
+  }
+
+  void _toggleRejectField(String fieldKey, bool? checked) {
+    setState(() {
+      if (checked == true) {
+        _checkedRejectFields.add(fieldKey);
+      } else {
+        _checkedRejectFields.remove(fieldKey);
+      }
+      _syncRejectRemark();
+    });
+  }
+
+  void _syncRejectRemark() {
+    final labels = <String>[];
+    for (final key in _rejectFieldOrder) {
+      if (_checkedRejectFields.contains(key)) {
+        labels.add(_fieldKeyToLabel[key] ?? key);
+      }
+    }
+    _rejectRemarkController.text = labels.join('\n');
+  }
+
+  String _remarkToSave() {
+    if (_checkedRejectFields.isNotEmpty) {
+      _syncRejectRemark();
+    }
+    return _rejectRemarkController.text.trim();
+  }
+
   Future<void> _initializePage() async {
     final uid = await ApiService.getUserId();
     loggedInUserId = uid ?? '';
@@ -54,9 +103,16 @@ class _ChallanEditDetailsScreenState extends State<ChallanEditDetailsScreen> {
 
     try {
       final data = await ApiService.getChallanEditDetails(widget.sp462);
+      if (data == null) {
+        throw Exception("No data returned for this challan.");
+      }
+      final sections = _buildSectionsFromData(data);
       setState(() {
         _data = data;
         _loading = false;
+        _checkedRejectFields.clear();
+        _rejectRemarkController.clear();
+        _initRejectFieldKeys(sections);
       });
     } catch (e) {
       setState(() {
@@ -80,176 +136,186 @@ class _ChallanEditDetailsScreenState extends State<ChallanEditDetailsScreen> {
     return text;
   }
 
-  List<_SectionDef> _buildSections() {
-    final d = _data!;
+  List<_SectionDef> _buildSections() =>
+      _buildSectionsFromData(_data!);
+
+  List<_SectionDef> _buildSectionsFromData(Map<String, dynamic> d) {
+    const basic = 'Basic Information';
+    const pricing = 'Pricing Details';
+    const discounts = 'Discounts & Offers';
+    const rto = 'RTO Details';
+    const tax = 'Tax Details';
+    const insurance = 'Insurance Details';
+    const financial = 'Financial Details';
+    const customer = 'Customer Information';
+
     return [
       _SectionDef(
-        title: 'Basic Information',
+        title: basic,
         summary: _summary(
           'Customer: ${_formatValue(d['customername'])}',
         ),
         icon: Icons.info_outline_rounded,
         iconColor: const Color(0xFF3B82F6),
         fields: [
-          _FieldData('Date', _formatValue(d['cdate'])),
-          _FieldData('Challan No', _formatValue(d['challanno']),
+          _FieldData(basic, 'Date', _formatValue(d['cdate'])),
+          _FieldData(basic, 'Challan No', _formatValue(d['challanno']),
               highlight: true),
-          _FieldData('Customer Name', _formatValue(d['customername'])),
-          _FieldData('Model Name', _formatValue(d['modelname'])),
-          _FieldData('Variant Name', _formatValue(d['variantname'])),
-          _FieldData('Color Name', _formatValue(d['colorname'])),
-          _FieldData('Sales Consultant', _formatValue(d['scname'])),
-          _FieldData('Team Leader', _formatValue(d['tlname'])),
-          _FieldData('VIN No', _formatValue(d['vinno'])),
-          _FieldData('Engine No', _formatValue(d['engineno'])),
+          _FieldData(basic, 'Customer Name', _formatValue(d['customername'])),
+          _FieldData(basic, 'Model Name', _formatValue(d['modelname'])),
+          _FieldData(basic, 'Variant Name', _formatValue(d['variantname'])),
+          _FieldData(basic, 'Color Name', _formatValue(d['colorname'])),
+          _FieldData(basic, 'Sales Consultant', _formatValue(d['scname'])),
+          _FieldData(basic, 'Team Leader', _formatValue(d['tlname'])),
+          _FieldData(basic, 'VIN No', _formatValue(d['vinno'])),
+          _FieldData(basic, 'Engine No', _formatValue(d['engineno'])),
         ],
       ),
       _SectionDef(
-        title: 'Pricing Details',
+        title: pricing,
         summary: _summary(
           'Ex-Showroom: ${_formatValue(d['ExshowRoomPrice'])}',
         ),
         icon: Icons.attach_money_rounded,
         iconColor: const Color(0xFF10B981),
         fields: [
-          _FieldData('Ex-Showroom Price', _formatValue(d['ExshowRoomPrice'])),
-          _FieldData('Fasttag', _formatValue(d['fasttag'])),
-          _FieldData('Handling Charge', _formatValue(d['handlingchrg'])),
-          _FieldData('TCS', _formatValue(d['tcs'])),
-          _FieldData('TRC', _formatValue(d['trc'])),
-          _FieldData('Accessories', _formatValue(d['Accessories'])),
-          _FieldData(
-              'Additional Warranty', _formatValue(d['AdditionalWarranty'])),
-          _FieldData('Warranty Year', _formatValue(d['WarrantyYear'])),
-          _FieldData('Warranty Amount', _formatValue(d['WarrantyAmount'])),
+          _FieldData(pricing, 'Ex-Showroom Price', _formatValue(d['ExshowRoomPrice'])),
+          _FieldData(pricing, 'Fasttag', _formatValue(d['fasttag'])),
+          _FieldData(pricing, 'Handling Charge', _formatValue(d['handlingchrg'])),
+          _FieldData(pricing, 'TCS', _formatValue(d['tcs'])),
+          _FieldData(pricing, 'TRC', _formatValue(d['trc'])),
+          _FieldData(pricing, 'Accessories', _formatValue(d['Accessories'])),
+          _FieldData(pricing, 'Additional Warranty',
+              _formatValue(d['AdditionalWarranty'])),
+          _FieldData(pricing, 'Warranty Year', _formatValue(d['WarrantyYear'])),
+          _FieldData(pricing, 'Warranty Amount', _formatValue(d['WarrantyAmount'])),
         ],
       ),
       _SectionDef(
-        title: 'Discounts & Offers',
+        title: discounts,
         summary: _summary('Corporate: ${_formatValue(d['Corporateyn'])}'),
         icon: Icons.local_offer_rounded,
         iconColor: const Color(0xFFF59E0B),
         fields: [
-          _FieldData('Corporate Y/N', _formatValue(d['Corporateyn'])),
-          _FieldData('Corporate Amount', _formatValue(d['Corporateamount'])),
-          _FieldData('Corporate Given', _formatValue(d['Corporategiven'])),
-          _FieldData('Exchange Y/N', _formatValue(d['Exchangeyn'])),
-          _FieldData('Exchange Amount', _formatValue(d['Exchangeamount'])),
-          _FieldData('Exchange Given', _formatValue(d['Exchangegiven'])),
-          _FieldData('Loyalty Y/N', _formatValue(d['Loyalityyn'])),
-          _FieldData('Loyalty Amount', _formatValue(d['Loyalityamount'])),
-          _FieldData('Loyalty Given', _formatValue(d['Loyalitygiven'])),
-          _FieldData('Dealer Y/N', _formatValue(d['dealeryn'])),
-          _FieldData('Dealer Amount', _formatValue(d['dealeramount'])),
-          _FieldData('Dealer Given', _formatValue(d['dealergiven'])),
+          _FieldData(discounts, 'Corporate Y/N', _formatValue(d['Corporateyn'])),
+          _FieldData(discounts, 'Corporate Amount', _formatValue(d['Corporateamount'])),
+          _FieldData(discounts, 'Corporate Given', _formatValue(d['Corporategiven'])),
+          _FieldData(discounts, 'Exchange Y/N', _formatValue(d['Exchangeyn'])),
+          _FieldData(discounts, 'Exchange Amount', _formatValue(d['Exchangeamount'])),
+          _FieldData(discounts, 'Exchange Given', _formatValue(d['Exchangegiven'])),
+          _FieldData(discounts, 'Loyalty Y/N', _formatValue(d['Loyalityyn'])),
+          _FieldData(discounts, 'Loyalty Amount', _formatValue(d['Loyalityamount'])),
+          _FieldData(discounts, 'Loyalty Given', _formatValue(d['Loyalitygiven'])),
+          _FieldData(discounts, 'Dealer Y/N', _formatValue(d['dealeryn'])),
+          _FieldData(discounts, 'Dealer Amount', _formatValue(d['dealeramount'])),
+          _FieldData(discounts, 'Dealer Given', _formatValue(d['dealergiven'])),
         ],
       ),
       _SectionDef(
-        title: 'RTO Details',
+        title: rto,
         summary: _summary('RTO Amount: ${_formatValue(d['RTOAmount'])}'),
         icon: Icons.directions_car_rounded,
         iconColor: const Color(0xFF8B5CF6),
         fields: [
-          _FieldData('RTO Rate', _formatValue(d['RTORate'])),
-          _FieldData('RTO Tax Surcharge', _formatValue(d['RTOTaxSurcharge'])),
-          _FieldData('Green Tax', _formatValue(d['GreenTax'])),
-          _FieldData('Reg Fee', _formatValue(d['RegFee'])),
-          _FieldData('HPN', _formatValue(d['HPN'])),
-          _FieldData('Duplicate', _formatValue(d['Duplicate'])),
-          _FieldData('Smart Card', _formatValue(d['SmartCard'])),
-          _FieldData('Other', _formatValue(d['Other'])),
-          _FieldData('RTO Amount', _formatValue(d['RTOAmount'])),
-          _FieldData('RTO City', _formatValue(d['rtocity'])),
-          _FieldData('RTO From', _formatValue(d['rtofrom'])),
-          _FieldData('RTO Temp', _formatValue(d['RTO TEMP'])),
+          _FieldData(rto, 'RTO Rate', _formatValue(d['RTORate'])),
+          _FieldData(rto, 'RTO Tax Surcharge', _formatValue(d['RTOTaxSurcharge'])),
+          _FieldData(rto, 'Green Tax', _formatValue(d['GreenTax'])),
+          _FieldData(rto, 'Reg Fee', _formatValue(d['RegFee'])),
+          _FieldData(rto, 'HPN', _formatValue(d['HPN'])),
+          _FieldData(rto, 'Duplicate', _formatValue(d['Duplicate'])),
+          _FieldData(rto, 'Smart Card', _formatValue(d['SmartCard'])),
+          _FieldData(rto, 'Other', _formatValue(d['Other'])),
+          _FieldData(rto, 'RTO Amount', _formatValue(d['RTOAmount'])),
+          _FieldData(rto, 'RTO City', _formatValue(d['rtocity'])),
+          _FieldData(rto, 'RTO From', _formatValue(d['rtofrom'])),
+          _FieldData(rto, 'RTO Temp', _formatValue(d['RTO TEMP'])),
         ],
       ),
       _SectionDef(
-        title: 'Tax Details',
+        title: tax,
         summary: _summary('Subtotal: ${_formatValue(d['subtotal'])}'),
         icon: Icons.receipt_rounded,
         iconColor: const Color(0xFFEC4899),
         fields: [
-          _FieldData('GST', _formatValue(d['GST'])),
-          _FieldData('CESS', _formatValue(d['CESS'])),
-          _FieldData('SGST', _formatValue(d['sgst'])),
-          _FieldData('CGST', _formatValue(d['cgst'])),
-          _FieldData('GST Percentage', _formatValue(d['GSTPercentage'])),
-          _FieldData('GST Amount', _formatValue(d['GSTAmount'])),
-          _FieldData('Subtotal', _formatValue(d['subtotal'])),
-          _FieldData('Amount', _formatValue(d['Amount'])),
+          _FieldData(tax, 'GST', _formatValue(d['GST'])),
+          _FieldData(tax, 'CESS', _formatValue(d['CESS'])),
+          _FieldData(tax, 'SGST', _formatValue(d['sgst'])),
+          _FieldData(tax, 'CGST', _formatValue(d['cgst'])),
+          _FieldData(tax, 'GST Percentage', _formatValue(d['GSTPercentage'])),
+          _FieldData(tax, 'GST Amount', _formatValue(d['GSTAmount'])),
+          _FieldData(tax, 'Subtotal', _formatValue(d['subtotal'])),
+          _FieldData(tax, 'Amount', _formatValue(d['Amount'])),
         ],
       ),
       _SectionDef(
-        title: 'Insurance Details',
+        title: insurance,
         summary: _summary('Insurance Amt: ${_formatValue(d['insamt'])}'),
         icon: Icons.security_rounded,
         iconColor: const Color(0xFF06B6D4),
         fields: [
-          _FieldData('IDV', _formatValue(d['Idv'])),
-          _FieldData('IDV Amount', _formatValue(d['IdvAmount'])),
-          _FieldData(
-              'Insurance Percentage', _formatValue(d['InsurancePercentage'])),
-          _FieldData('Insurance Per Amount', _formatValue(d['InsperAmount'])),
-          _FieldData(
-              'Discount Percentage', _formatValue(d['DiscountPrecentage'])),
-          _FieldData('Discount Amount', _formatValue(d['DiscountAmount'])),
-          _FieldData('Third Party', _formatValue(d['ThirdParty'])),
-          _FieldData('PA Cover', _formatValue(d['PACover'])),
-          _FieldData('ZD', _formatValue(d['ZD'])),
-          _FieldData('PB', _formatValue(d['PB'])),
-          _FieldData('KP', _formatValue(d['KP'])),
-          _FieldData('Paid Driver', _formatValue(d['PaidDriver'])),
-          _FieldData('Insurance Amount', _formatValue(d['InsuranceAmount'])),
-          _FieldData('Insurance Company', _formatValue(d['inscmpy'])),
-          _FieldData('Policy', _formatValue(d['policy'])),
-          _FieldData(
-              'Insurance Issue Date', _formatValue(d['insissuedate'])),
-          _FieldData('Insurance Amt', _formatValue(d['insamt'])),
-          _FieldData('Insurance Type', _formatValue(d['instype'])),
-          _FieldData('Insurance Showroom', _formatValue(d['insshowroom'])),
-          _FieldData('Previous Insurance Amt', _formatValue(d['preinsamt'])),
-          _FieldData('NCB', _formatValue(d['NCB'])),
+          _FieldData(insurance, 'IDV', _formatValue(d['Idv'])),
+          _FieldData(insurance, 'IDV Amount', _formatValue(d['IdvAmount'])),
+          _FieldData(insurance, 'Insurance Percentage',
+              _formatValue(d['InsurancePercentage'])),
+          _FieldData(insurance, 'Insurance Per Amount', _formatValue(d['InsperAmount'])),
+          _FieldData(insurance, 'Discount Percentage',
+              _formatValue(d['DiscountPrecentage'])),
+          _FieldData(insurance, 'Discount Amount', _formatValue(d['DiscountAmount'])),
+          _FieldData(insurance, 'Third Party', _formatValue(d['ThirdParty'])),
+          _FieldData(insurance, 'PA Cover', _formatValue(d['PACover'])),
+          _FieldData(insurance, 'ZD', _formatValue(d['ZD'])),
+          _FieldData(insurance, 'PB', _formatValue(d['PB'])),
+          _FieldData(insurance, 'KP', _formatValue(d['KP'])),
+          _FieldData(insurance, 'Paid Driver', _formatValue(d['PaidDriver'])),
+          _FieldData(insurance, 'Insurance Amount', _formatValue(d['InsuranceAmount'])),
+          _FieldData(insurance, 'Insurance Company', _formatValue(d['inscmpy'])),
+          _FieldData(insurance, 'Policy', _formatValue(d['policy'])),
+          _FieldData(insurance, 'Insurance Issue Date', _formatValue(d['insissuedate'])),
+          _FieldData(insurance, 'Insurance Amt', _formatValue(d['insamt'])),
+          _FieldData(insurance, 'Insurance Type', _formatValue(d['instype'])),
+          _FieldData(insurance, 'Insurance Showroom', _formatValue(d['insshowroom'])),
+          _FieldData(insurance, 'Previous Insurance Amt', _formatValue(d['preinsamt'])),
+          _FieldData(insurance, 'NCB', _formatValue(d['NCB'])),
         ],
       ),
       _SectionDef(
-        title: 'Financial Details',
+        title: financial,
         summary: _summary('Net Amount: ${_formatValue(d['netamount'])}'),
         icon: Icons.account_balance_rounded,
         iconColor: const Color(0xFFEF4444),
         fields: [
-          _FieldData('Net Amount', _formatValue(d['netamount'])),
-          _FieldData('Less of All Encashment Scheme',
+          _FieldData(financial, 'Net Amount', _formatValue(d['netamount'])),
+          _FieldData(financial, 'Less of All Encashment Scheme',
               _formatValue(d['lessofallencashmentschemne'])),
-          _FieldData('Hypothecation', _formatValue(d['hypothecationname'])),
-          _FieldData('Bank Name', _formatValue(d['bankname'])),
-          _FieldData('Bank Amount', _formatValue(d['bankamt'])),
-          _FieldData('Finance Amount', _formatValue(d['financeamt'])),
-          _FieldData('Finance Type', _formatValue(d['financetype'])),
-          _FieldData('Bank Due', _formatValue(d['bankdue'])),
-          _FieldData('Customer Due', _formatValue(d['custdue'])),
-          _FieldData('Customer Receive', _formatValue(d['crecive'])),
-          _FieldData('Finance Receive', _formatValue(d['freceive'])),
-          _FieldData('RC Amount', _formatValue(d['rcamt'])),
-          _FieldData('Balance', _formatValue(d['bal'])),
+          _FieldData(financial, 'Hypothecation', _formatValue(d['hypothecationname'])),
+          _FieldData(financial, 'Bank Name', _formatValue(d['bankname'])),
+          _FieldData(financial, 'Bank Amount', _formatValue(d['bankamt'])),
+          _FieldData(financial, 'Finance Amount', _formatValue(d['financeamt'])),
+          _FieldData(financial, 'Finance Type', _formatValue(d['financetype'])),
+          _FieldData(financial, 'Bank Due', _formatValue(d['bankdue'])),
+          _FieldData(financial, 'Customer Due', _formatValue(d['custdue'])),
+          _FieldData(financial, 'Customer Receive', _formatValue(d['crecive'])),
+          _FieldData(financial, 'Finance Receive', _formatValue(d['freceive'])),
+          _FieldData(financial, 'RC Amount', _formatValue(d['rcamt'])),
+          _FieldData(financial, 'Balance', _formatValue(d['bal'])),
         ],
       ),
       _SectionDef(
-        title: 'Customer Information',
+        title: customer,
         summary: _summary('Mobile: ${_formatValue(d['mobileno'])}'),
         icon: Icons.person_rounded,
         iconColor: const Color(0xFF6366F1),
         fields: [
-          _FieldData('Address', _formatValue(d['address'])),
-          _FieldData('Father Name', _formatValue(d['fathername'])),
-          _FieldData('Mobile No', _formatValue(d['mobileno'])),
-          _FieldData('Aadhar Card', _formatValue(d['aadharcard'])),
-          _FieldData('PAN No', _formatValue(d['panno'])),
-          _FieldData('Nominee Name', _formatValue(d['nomineename'])),
-          _FieldData('Age', _formatValue(d['age'])),
-          _FieldData('Relation', _formatValue(d['relation'])),
-          _FieldData('GSTIN', _formatValue(d['gstin'])),
-          _FieldData('Title', _formatValue(d['title'])),
+          _FieldData(customer, 'Address', _formatValue(d['address'])),
+          _FieldData(customer, 'Father Name', _formatValue(d['fathername'])),
+          _FieldData(customer, 'Mobile No', _formatValue(d['mobileno'])),
+          _FieldData(customer, 'Aadhar Card', _formatValue(d['aadharcard'])),
+          _FieldData(customer, 'PAN No', _formatValue(d['panno'])),
+          _FieldData(customer, 'Nominee Name', _formatValue(d['nomineename'])),
+          _FieldData(customer, 'Age', _formatValue(d['age'])),
+          _FieldData(customer, 'Relation', _formatValue(d['relation'])),
+          _FieldData(customer, 'GSTIN', _formatValue(d['gstin'])),
+          _FieldData(customer, 'Title', _formatValue(d['title'])),
         ],
       ),
     ];
@@ -499,8 +565,52 @@ class _ChallanEditDetailsScreenState extends State<ChallanEditDetailsScreen> {
             ),
           ),
         ),
+        if (_checkedRejectFields.isNotEmpty) _buildRejectRemarkPreview(),
         _buildActionButtons(),
       ],
+    );
+  }
+
+  Widget _buildRejectRemarkPreview() {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF5F5),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFFECACA)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.edit_note_rounded,
+                  size: 16, color: Color(0xFFEF4444)),
+              const SizedBox(width: 6),
+              Text(
+                'Reject remark (${_checkedRejectFields.length} field${_checkedRejectFields.length == 1 ? '' : 's'})',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFFEF4444),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            _rejectRemarkController.text,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: _textDark,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -588,6 +698,12 @@ class _ChallanEditDetailsScreenState extends State<ChallanEditDetailsScreen> {
                           field: section.fields[i],
                           isEven: i % 2 == 0,
                           isLast: i == section.fields.length - 1,
+                          isChecked: _checkedRejectFields
+                              .contains(section.fields[i].fieldKey),
+                          onCheckChanged: (v) => _toggleRejectField(
+                            section.fields[i].fieldKey,
+                            v,
+                          ),
                         ),
                     ],
                   ),
@@ -716,12 +832,33 @@ class _ChallanEditDetailsScreenState extends State<ChallanEditDetailsScreen> {
   Future<void> _onReject() async {
     if (_data == null) return;
 
-    final remark = await showDialog<String>(
+    _syncRejectRemark();
+
+    final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => const _RejectDialog(),
+      builder: (context) => _RejectDialog(
+        remarkController: _rejectRemarkController,
+        onSyncFromChecks: _syncRejectRemark,
+        hasCheckedFields: _checkedRejectFields.isNotEmpty,
+      ),
     );
 
-    if (remark == null || remark.isEmpty) return;
+    if (confirmed != true) return;
+
+    final remark = _remarkToSave();
+
+    if (remark.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Please check at least one field or enter a rejection reason',
+          ),
+          backgroundColor: Color(0xFFEF4444),
+        ),
+      );
+      return;
+    }
 
     setState(() => _processing = true);
 
@@ -730,6 +867,7 @@ class _ChallanEditDetailsScreenState extends State<ChallanEditDetailsScreen> {
       rejectionData['loginUserId'] = loggedInUserId;
       rejectionData['sp_587'] = loggedInUserId;
       rejectionData['sp_588'] = await ApiService.getClientIp();
+      rejectionData['sp_581'] = remark;
 
       final result = await ApiService.rejectChallan(rejectionData, remark);
       if (!mounted) return;
@@ -782,11 +920,19 @@ class _SectionDef {
 }
 
 class _FieldData {
+  final String sectionTitle;
   final String label;
   final String value;
   final bool highlight;
 
-  const _FieldData(this.label, this.value, {this.highlight = false});
+  String get fieldKey => '$sectionTitle::$label';
+
+  const _FieldData(
+    this.sectionTitle,
+    this.label,
+    this.value, {
+    this.highlight = false,
+  });
 }
 
 class _SectionFieldRow extends StatelessWidget {
@@ -800,11 +946,15 @@ class _SectionFieldRow extends StatelessWidget {
   final _FieldData field;
   final bool isEven;
   final bool isLast;
+  final bool isChecked;
+  final ValueChanged<bool?> onCheckChanged;
 
   const _SectionFieldRow({
     required this.field,
     required this.isEven,
     required this.isLast,
+    required this.isChecked,
+    required this.onCheckChanged,
   });
 
   @override
@@ -819,8 +969,18 @@ class _SectionFieldRow extends StatelessWidget {
         ),
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          SizedBox(
+            width: 44,
+            child: Checkbox(
+              value: isChecked,
+              onChanged: onCheckChanged,
+              activeColor: _primary,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              visualDensity: VisualDensity.compact,
+            ),
+          ),
           Expanded(
             flex: 2,
             child: Container(
@@ -885,19 +1045,51 @@ class _SectionFieldRow extends StatelessWidget {
 }
 
 class _RejectDialog extends StatefulWidget {
-  const _RejectDialog();
+  final TextEditingController remarkController;
+  final VoidCallback onSyncFromChecks;
+  final bool hasCheckedFields;
+
+  const _RejectDialog({
+    required this.remarkController,
+    required this.onSyncFromChecks,
+    required this.hasCheckedFields,
+  });
 
   @override
   State<_RejectDialog> createState() => _RejectDialogState();
 }
 
 class _RejectDialogState extends State<_RejectDialog> {
-  final _remarkController = TextEditingController();
-
   @override
-  void dispose() {
-    _remarkController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.hasCheckedFields) {
+        widget.onSyncFromChecks();
+      }
+      setState(() {});
+    });
+  }
+
+  void _submit() {
+    if (widget.hasCheckedFields) {
+      widget.onSyncFromChecks();
+    }
+
+    final remark = widget.remarkController.text.trim();
+    if (remark.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Please check at least one field or enter a rejection reason',
+          ),
+          backgroundColor: Color(0xFFEF4444),
+        ),
+      );
+      return;
+    }
+
+    Navigator.pop(context, true);
   }
 
   @override
@@ -919,15 +1111,16 @@ class _RejectDialogState extends State<_RejectDialog> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Please provide a reason for rejection:',
+            'Checked fields are added below. You can edit before rejecting:',
             style: TextStyle(fontSize: 14, color: Color(0xFF64748B)),
           ),
           const SizedBox(height: 16),
           TextField(
-            controller: _remarkController,
-            maxLines: 3,
+            controller: widget.remarkController,
+            maxLines: 5,
+            onChanged: (_) => setState(() {}),
             decoration: InputDecoration(
-              hintText: 'Enter rejection reason...',
+              hintText: 'Reject remark (auto-filled from checked fields)...',
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -939,22 +1132,11 @@ class _RejectDialogState extends State<_RejectDialog> {
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Navigator.pop(context, false),
           child: const Text('Cancel'),
         ),
         ElevatedButton(
-          onPressed: () {
-            if (_remarkController.text.trim().isEmpty) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Please enter a rejection reason'),
-                  backgroundColor: Color(0xFFEF4444),
-                ),
-              );
-              return;
-            }
-            Navigator.pop(context, _remarkController.text.trim());
-          },
+          onPressed: _submit,
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFFEF4444),
             foregroundColor: Colors.white,
