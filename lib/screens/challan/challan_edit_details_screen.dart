@@ -27,6 +27,7 @@ class _ChallanEditDetailsScreenState extends State<ChallanEditDetailsScreen> {
   final List<String> _rejectFieldOrder = [];
   final Map<String, String> _fieldKeyToLabel = {};
   final TextEditingController _rejectRemarkController = TextEditingController();
+  bool _isRadioSelected = false;
 
   static const Color _primary = Color(0xFF1A56DB);
   static const Color _secondary = Color(0xFF3B82F6);
@@ -113,6 +114,7 @@ class _ChallanEditDetailsScreenState extends State<ChallanEditDetailsScreen> {
         _checkedRejectFields.clear();
         _rejectRemarkController.clear();
         _initRejectFieldKeys(sections);
+        _isRadioSelected = false;
       });
     } catch (e) {
       setState(() {
@@ -529,6 +531,77 @@ class _ChallanEditDetailsScreenState extends State<ChallanEditDetailsScreen> {
     );
   }
 
+  Widget _buildControlsCard() {
+    return Container(
+      decoration: BoxDecoration(
+        color: _cardBg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _rowBorder, width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: _primary.withValues(alpha: 0.06),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: InkWell(
+        onTap: () {
+          setState(() {
+            _isRadioSelected = !_isRadioSelected;
+          });
+        },
+        borderRadius: BorderRadius.circular(10),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 32,
+                height: 32,
+                child: Radio<bool>(
+                  value: true,
+                  groupValue: _isRadioSelected,
+                  onChanged: (val) {
+                    setState(() {
+                      _isRadioSelected = val ?? false;
+                    });
+                  },
+                  activeColor: _primary,
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Show Selection Checkboxes',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: _textDark,
+                      ),
+                    ),
+                    Text(
+                      'Enable checkboxes to select fields for rejection remarks',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        color: _textMid,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildContent() {
     if (_data == null) return const SizedBox.shrink();
 
@@ -539,29 +612,35 @@ class _ChallanEditDetailsScreenState extends State<ChallanEditDetailsScreen> {
         Expanded(
           child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-            child: Container(
-              decoration: BoxDecoration(
-                color: _cardBg,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: _rowBorder, width: 1.2),
-                boxShadow: [
-                  BoxShadow(
-                    color: _primary.withValues(alpha: 0.08),
-                    blurRadius: 20,
-                    offset: const Offset(0, 6),
+            child: Column(
+              children: [
+                _buildControlsCard(),
+                const SizedBox(height: 14),
+                Container(
+                  decoration: BoxDecoration(
+                    color: _cardBg,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: _rowBorder, width: 1.2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: _primary.withValues(alpha: 0.08),
+                        blurRadius: 20,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: Column(
-                children: [
-                  for (var i = 0; i < sections.length; i++)
-                    _buildSection(
-                      section: sections[i],
-                      showDivider: i < sections.length - 1,
-                    ),
-                ],
-              ),
+                  clipBehavior: Clip.antiAlias,
+                  child: Column(
+                    children: [
+                      for (var i = 0; i < sections.length; i++)
+                        _buildSection(
+                          section: sections[i],
+                          showDivider: i < sections.length - 1,
+                        ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -704,6 +783,7 @@ class _ChallanEditDetailsScreenState extends State<ChallanEditDetailsScreen> {
                             section.fields[i].fieldKey,
                             v,
                           ),
+                          showCheckbox: _isRadioSelected,
                         ),
                     ],
                   ),
@@ -948,6 +1028,7 @@ class _SectionFieldRow extends StatelessWidget {
   final bool isLast;
   final bool isChecked;
   final ValueChanged<bool?> onCheckChanged;
+  final bool showCheckbox;
 
   const _SectionFieldRow({
     required this.field,
@@ -955,6 +1036,7 @@ class _SectionFieldRow extends StatelessWidget {
     required this.isLast,
     required this.isChecked,
     required this.onCheckChanged,
+    required this.showCheckbox,
   });
 
   @override
@@ -971,16 +1053,17 @@ class _SectionFieldRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          SizedBox(
-            width: 44,
-            child: Checkbox(
-              value: isChecked,
-              onChanged: onCheckChanged,
-              activeColor: _primary,
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              visualDensity: VisualDensity.compact,
+          if (showCheckbox)
+            SizedBox(
+              width: 44,
+              child: Checkbox(
+                value: isChecked,
+                onChanged: onCheckChanged,
+                activeColor: _primary,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                visualDensity: VisualDensity.compact,
+              ),
             ),
-          ),
           Expanded(
             flex: 2,
             child: Container(
