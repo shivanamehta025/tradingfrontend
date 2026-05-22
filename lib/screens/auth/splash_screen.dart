@@ -18,8 +18,8 @@ class _SplashScreenState extends State<SplashScreen>
   late AnimationController _animCtrl;
   late Animation<double> _fadeAnim;
 
-  static const Color kRed     = Color(0xFF8B1E3F);
-  static const Color kRedDark = Color(0xFF5C1229);
+static const Color kRed     = Color(0xFF1565C0); // Blue
+static const Color kRedDark = Color(0xFF0D47A1); // Dark Blue
 
   @override
   void initState() {

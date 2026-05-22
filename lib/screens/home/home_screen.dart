@@ -108,7 +108,7 @@ Future<void> _logout() async {
         ElevatedButton(
           onPressed: () => Navigator.pop(context, true),
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF8B1E3F),
+        backgroundColor: const Color(0xFF1565C0),
             foregroundColor: Colors.white,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
@@ -159,13 +159,13 @@ Future<void> _logout() async {
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [Color(0xFF5C1229), Color(0xFF8B1E3F), Color(0xFFAB2550)],
+                colors: [Color(0xFF0D47A1), Color(0xFF1565C0), Color(0xFF42A5F5)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Color(0x448B1E3F),
+               color: Color(0x441565C0),
                   blurRadius: 16,
                   offset: Offset(0, 4),
                 ),
@@ -246,7 +246,7 @@ Future<void> _logout() async {
                             text: widget.userName.split(' ').first,
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF8B1E3F),
+                        color: Color(0xFF1565C0),
                             ),
                           ),
                         ],

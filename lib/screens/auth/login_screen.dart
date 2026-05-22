@@ -21,9 +21,9 @@ bool? companyValid;
 String databaseName = "";
 String companyName = "";
 
-  static const Color kRed      = Color(0xFF8B1E3F);
-  static const Color kRedLight = Color(0xFFAB2550);
-  static const Color kRedDark  = Color(0xFF5C1229);
+  static const Color kRed      = Color(0xFF1565C0); // Blue
+static const Color kRedLight = Color(0xFF42A5F5); // Light Blue
+static const Color kRedDark  = Color(0xFF0D47A1); // Dark Blue
 
   @override
   void initState() {
