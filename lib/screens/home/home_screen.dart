@@ -6,7 +6,7 @@ import '../../services/api_service.dart';
 import '../auth/login_screen.dart';
 import '../challan/challan_screen.dart';
 import '../notification/notification_screen.dart';
-
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 
 class HomeScreen extends StatefulWidget {
@@ -51,27 +51,38 @@ bool isLoading = true;
 }
 Future<void> generateFCMToken() async {
 
-  final token =
-      await FirebaseMessaging.instance
-          .getToken();
+  try {
 
-  print("FCM TOKEN:");
-  print(token);
+    String? token =
+        await FirebaseMessaging.instance
+            .getToken();
 
-  if (token != null) {
+    print("===============");
+    print("FCM TOKEN:");
+    print(token);
+    print("===============");
 
-    await ApiService
-        .saveFCMToken(token);
+    if (token != null) {
+
+      await ApiService
+          .saveFCMToken(token);
+
+      print("FCM TOKEN SAVED");
+    }
+
+  } catch (e) {
+
+    print("FCM TOKEN ERROR:");
+    print(e);
   }
 }
 Future<void>
 requestNotificationPermission() async {
 
-  FirebaseMessaging messaging =
-      FirebaseMessaging.instance;
-
   NotificationSettings settings =
-      await messaging.requestPermission(
+
+      await FirebaseMessaging.instance
+          .requestPermission(
 
     alert: true,
     badge: true,
@@ -79,9 +90,10 @@ requestNotificationPermission() async {
   );
 
   print(
-    "NOTIFICATION PERMISSION: "
-    "${settings.authorizationStatus}"
+    "NOTIFICATION PERMISSION:"
   );
+
+  print(settings.authorizationStatus);
 }
 Future<void> loadUnreadCount() async {
 
