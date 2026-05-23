@@ -2,9 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
-import '../../services/notification_service.dart';
+//import '../../services/notification_service.dart';
 import '../auth/login_screen.dart';
 import '../challan/challan_screen.dart';
+import '../notification/notification_screen.dart';
+
+
 
 class HomeScreen extends StatefulWidget {
   final String userName;
@@ -15,12 +18,19 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
+
 class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Timer? _pendingChallanTimer;
-
+int unreadCount = 0;
+String utg = "";
+bool isLoading = true;
   @override
   void initState() {
     super.initState();
+      loadSecurity();
+      loadUnreadCount();
+      requestNotificationPermission();
+      generateFCMToken();
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkPendingChallanNotifications();
@@ -30,7 +40,59 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       (_) => _checkPendingChallanNotifications(),
     );
   }
+  Future<void> loadSecurity() async {
+  utg = await ApiService.getUTG() ?? "";
 
+  print("USER GROUP : $utg");
+
+  setState(() {
+    isLoading = false;
+  });
+}
+Future<void> generateFCMToken() async {
+
+  final token =
+      await FirebaseMessaging.instance
+          .getToken();
+
+  print("FCM TOKEN:");
+  print(token);
+
+  if (token != null) {
+
+    await ApiService
+        .saveFCMToken(token);
+  }
+}
+Future<void>
+requestNotificationPermission() async {
+
+  FirebaseMessaging messaging =
+      FirebaseMessaging.instance;
+
+  NotificationSettings settings =
+      await messaging.requestPermission(
+
+    alert: true,
+    badge: true,
+    sound: true,
+  );
+
+  print(
+    "NOTIFICATION PERMISSION: "
+    "${settings.authorizationStatus}"
+  );
+}
+Future<void> loadUnreadCount() async {
+
+  final count =
+      await ApiService
+          .getUnreadNotificationCount();
+
+  setState(() {
+    unreadCount = count;
+  });
+}
   @override
   void dispose() {
     _pendingChallanTimer?.cancel();
@@ -59,10 +121,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
       if (newPendingChallans.isEmpty) return;
 
-      await NotificationService.showPendingChallanNotifications(
-        newPendingChallans,
-        totalCount: count,
-      );
+     
 
       await ApiService.saveNotifiedPendingChallanIds({
         ...alreadyNotified,
@@ -149,6 +208,7 @@ Future<void> _logout() async {
   }
 }
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -208,19 +268,123 @@ Future<void> _logout() async {
                         ),
                       ]),
                     ]),
-                    GestureDetector(
-                      onTap: _logout,
-                      child: Container(
-                        width: 38, height: 38,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: Colors.white.withOpacity(0.35)),
-                        ),
-                        child: const Icon(Icons.logout_rounded,
-                            color: Colors.white, size: 18),
-                      ),
-                    ),
+                   Row(
+  children: [
+
+    // NOTIFICATION BUTTON
+Stack(
+  children: [
+
+    // NOTIFICATION BUTTON
+    GestureDetector(
+
+      onTap: () async {
+
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) =>
+                const NotificationScreen(),
+          ),
+        );
+
+        // REFRESH UNREAD COUNT
+        await loadUnreadCount();
+      },
+
+      child: Container(
+
+        width: 38,
+        height: 38,
+
+        margin: const EdgeInsets.only(
+          right: 10,
+        ),
+
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.2),
+          borderRadius:
+              BorderRadius.circular(10),
+          border: Border.all(
+            color: Colors.white.withOpacity(0.35),
+          ),
+        ),
+
+        child: const Icon(
+          Icons.notifications,
+          color: Colors.white,
+          size: 18,
+        ),
+      ),
+    ),
+
+    // UNREAD BADGE
+    if (unreadCount > 0)
+
+      Positioned(
+
+        right: 6,
+        top: 2,
+
+        child: Container(
+
+          padding:
+              const EdgeInsets.all(4),
+
+          decoration: const BoxDecoration(
+            color: Colors.red,
+            shape: BoxShape.circle,
+          ),
+
+          constraints: const BoxConstraints(
+            minWidth: 18,
+            minHeight: 18,
+          ),
+
+          child: Text(
+
+            unreadCount > 99
+                ? "99+"
+                : unreadCount.toString(),
+
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+            ),
+
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ),
+  ],
+),
+
+    // LOGOUT BUTTON
+    GestureDetector(
+      onTap: _logout,
+
+      child: Container(
+        width: 38,
+        height: 38,
+
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.2),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: Colors.white.withOpacity(0.35),
+          ),
+        ),
+
+        child: const Icon(
+          Icons.logout_rounded,
+          color: Colors.white,
+          size: 18,
+        ),
+      ),
+    ),
+  ],
+),
                   ],
                 ),
               ),
@@ -262,21 +426,27 @@ Future<void> _logout() async {
 
                   // ── DASHBOARD CARDS ───────────────────────────────────
                   Row(children: [
-                    Expanded(child: _dashCard(
-                      icon: Icons.receipt_long_rounded,
-                      label: "Challan",
-                      subtitle: "View & manage challans",
-                      gradient: [const Color(0xFF1565C0), const Color(0xFF1E88E5)],
-                      accentColor: const Color(0xFF82B1FF),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const ChallanScreen(),
-                          ),
-                        );
-                      },
-                    )),
+                   if (utg == "4848C835-2A09-4A80-A7E2-383C95926C54")
+  Expanded(
+    child: _dashCard(
+      icon: Icons.receipt_long_rounded,
+      label: "Challan",
+      subtitle: "View & manage challans",
+      gradient: [
+        const Color(0xFF1565C0),
+        const Color(0xFF1E88E5)
+      ],
+      accentColor: const Color(0xFF82B1FF),
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const ChallanScreen(),
+          ),
+        );
+      },
+    ),
+  ),
                   ]),
                 ],
               ),

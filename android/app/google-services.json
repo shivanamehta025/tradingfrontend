@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "754396208118",
+    "project_id": "myautoshop-394f2",
+    "storage_bucket": "myautoshop-394f2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:754396208118:android:2cceca796f7289504545d7",
+        "android_client_info": {
+          "package_name": "com.example.car_app_flutter"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCVNDK0vHbsiz3CqL7ew4R3AQWGMdoxpgw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

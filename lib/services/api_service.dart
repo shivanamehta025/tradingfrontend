@@ -50,6 +50,10 @@ class ApiService {
     ]);
   }
 
+  static Future<String?> getUTG() async {
+  return await _storage.read(key: "utg");
+}
+
   static Future<Map<String, String>?> getUserSession() async {
     final token = await _storage.read(key: "token");
 
@@ -162,7 +166,64 @@ class ApiService {
       return "fallback_${DateTime.now().millisecondsSinceEpoch}";
     }
   }
+ // ───────────────── NOTIFICATIONS ─────────────────
 
+  static Future<List<Map<String, dynamic>>>
+  getNotifications() async {
+
+    try {
+
+      final token = await getToken();
+
+      if (token == null || token.isEmpty) {
+        return [];
+      }
+
+      final res = await http.get(
+
+        Uri.parse(
+          "$baseUrl/api/notifications",
+        ),
+
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $token",
+        },
+      );
+
+      print("NOTIFICATION RESPONSE:");
+      print(res.body);
+print("NOTIFICATION STATUS:");
+print(res.statusCode);
+
+print("NOTIFICATION BODY:");
+print(res.body);
+      if (res.statusCode == 200) {
+
+        final body =
+            jsonDecode(res.body);
+
+        if (
+            body["success"] == true &&
+            body["data"] is List
+        ) {
+
+          return List<Map<String, dynamic>>
+              .from(body["data"]);
+        }
+      }
+
+      return [];
+
+    } catch (e) {
+
+      print(
+        "GET NOTIFICATIONS ERROR: $e"
+      );
+
+      return [];
+    }
+  }
   static String _randomSuffix() {
     const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
     final rand = DateTime.now().microsecondsSinceEpoch;
@@ -537,4 +598,122 @@ class ApiService {
       };
     }
   }
+
+  static Future<int>
+getUnreadNotificationCount() async {
+
+  try {
+
+    final token = await getToken();
+
+    if (token == null || token.isEmpty) {
+      return 0;
+    }
+
+    final res = await http.get(
+
+      Uri.parse(
+        "$baseUrl/api/notifications/unread-count",
+      ),
+
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer $token",
+      },
+    );
+print("UNREAD STATUS:");
+print(res.statusCode);
+
+print("UNREAD BODY:");
+print(res.body);
+    if (res.statusCode == 200) {
+
+      final body =
+          jsonDecode(res.body);
+
+      return body["unread_count"] ?? 0;
+    }
+
+    return 0;
+
+  } catch (e) {
+
+    print(
+      "UNREAD COUNT ERROR: $e"
+    );
+
+    return 0;
+  }
+}
+
+static Future<void>
+markNotificationAsRead(
+  String id,
+) async {
+
+  try {
+
+    final token = await getToken();
+
+    if (token == null) return;
+
+    await http.post(
+
+      Uri.parse(
+        "$baseUrl/api/notifications/read/$id",
+      ),
+
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer $token",
+      },
+    );
+
+  } catch (e) {
+
+    print(
+      "MARK READ ERROR: $e"
+    );
+  }
+}
+
+static Future<void>
+saveFCMToken(String fcmToken) async {
+
+  try {
+
+    final token = await getToken();
+
+    if (token == null) return;
+
+    await http.post(
+
+      Uri.parse(
+        "$baseUrl/api/auth/save-fcm-token",
+      ),
+
+      headers: {
+
+        "Content-Type":
+            "application/json",
+
+        "Authorization":
+            "Bearer $token",
+      },
+
+      body: jsonEncode({
+        "token": fcmToken,
+      }),
+    );
+
+    print("FCM TOKEN SAVED");
+
+  } catch (e) {
+
+    print(
+      "SAVE FCM TOKEN ERROR: $e"
+    );
+  }
+}
+
 }
