@@ -7,6 +7,7 @@ import '../auth/login_screen.dart';
 import '../challan/challan_screen.dart';
 import '../notification/notification_screen.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 
 class HomeScreen extends StatefulWidget {
@@ -31,6 +32,19 @@ bool isLoading = true;
       loadUnreadCount();
       requestNotificationPermission();
       generateFCMToken();
+      FirebaseMessaging.onMessage.listen(
+
+  (RemoteMessage message) {
+
+    print(
+      "PUSH RECEIVED:"
+    );
+
+    print(
+      message.notification?.title
+    );
+  },
+);
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkPendingChallanNotifications();
