@@ -32,16 +32,20 @@ bool isLoading = true;
       loadUnreadCount();
       requestNotificationPermission();
       generateFCMToken();
-      FirebaseMessaging.onMessage.listen(
+FirebaseMessaging.onMessage.listen(
 
   (RemoteMessage message) {
 
     print(
-      "PUSH RECEIVED:"
+      "NOTIFICATION RECEIVED"
     );
 
     print(
       message.notification?.title
+    );
+
+    print(
+      message.notification?.body
     );
   },
 );
