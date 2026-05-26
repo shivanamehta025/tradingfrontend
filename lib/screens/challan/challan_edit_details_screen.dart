@@ -214,13 +214,13 @@ class _ChallanEditDetailsScreenState extends State<ChallanEditDetailsScreen> {
       ),
       _SectionDef(
         title: discount,
-        summary: _summary('Ex-Showroom: ${_formatValue(d['sp_482'])}'),
+        summary: _summary('Subtotal: ${_formatValue(d['subtotal'])}'),
         icon: Icons.discount_rounded,
         iconColor: const Color(0xFFEC4899),
         fields: [
-          _FieldData(discount, 'Ex-Showroom Price', _formatValue(d['sp_482'])),
-          _FieldData(discount, 'Less of All Encashment Scheme', _formatValue(d['sp_522'])),
-          _FieldData(discount, 'Subtotal', _formatValue(d['sp_503'])),
+          _FieldData(discount, 'Ex-Showroom Price', _formatValue(d['ExshowRoomPrice'])),
+          _FieldData(discount, 'Less of All Encashment Scheme', _formatValue(d['lessofallencashmentschemne'])),
+          _FieldData(discount, 'Subtotal', _formatValue(d['subtotal'])),
         ],
       ),
       _SectionDef(
