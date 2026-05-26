@@ -88,27 +88,27 @@ static const Color kRedDark = Color(0xFF0D47A1); // Dark Blue
             children: [
               // App icon
               Container(
-                width: 90,
-                height: 90,
+                width: 160,
+                height: 160,
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.2),
                   shape: BoxShape.circle,
                   border: Border.all(
                     color: Colors.white.withOpacity(0.6),
-                    width: 2,
+                    width: 3,
                   ),
                 ),
                 child: const Icon(
                   Icons.directions_car_rounded,
-                  size: 48,
+                  size: 90,
                   color: Colors.white,
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
               const Text(
                 "MY AUTOSHOP",
                 style: TextStyle(
-                  fontSize: 28,
+                  fontSize: 32,
                   fontWeight: FontWeight.w900,
                   color: Colors.white,
                   letterSpacing: 3,

@@ -180,24 +180,24 @@ print("USER ID       : ${passwordCtrl.text.trim()}");
               children: [
                 // Car icon in circle
                 Container(
-                  width: 72, height: 72,
+                  width: 120, height: 120,
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.2),
                     shape: BoxShape.circle,
                     border: Border.all(
-                        color: Colors.white.withOpacity(0.6), width: 2),
+                        color: Colors.white.withOpacity(0.6), width: 3),
                   ),
                   child: const Icon(
                     Icons.directions_car_rounded,
-                    size: 38,
+                    size: 65,
                     color: Colors.white,
                   ),
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 18),
                 const Text(
                   "MY AUTOSHOP",
                   style: TextStyle(
-                    fontSize: 26,
+                    fontSize: 30,
                     fontWeight: FontWeight.w900,
                     color: Colors.white,
                     letterSpacing: 3,
