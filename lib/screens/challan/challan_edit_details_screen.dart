@@ -143,6 +143,7 @@ class _ChallanEditDetailsScreenState extends State<ChallanEditDetailsScreen> {
     const basic = 'Basic Information';
     const pricing = 'Pricing Details';
     const discounts = 'Discounts & Offers';
+    const discount = 'Discount';
     const rto = 'RTO Details';
     const tax = 'Tax Details';
     const insurance = 'Insurance Details';
@@ -209,6 +210,17 @@ class _ChallanEditDetailsScreenState extends State<ChallanEditDetailsScreen> {
           _FieldData(discounts, 'Dealer Y/N', _formatValue(d['dealeryn'])),
           _FieldData(discounts, 'Dealer Amount', _formatValue(d['dealeramount'])),
           _FieldData(discounts, 'Dealer Given', _formatValue(d['dealergiven'])),
+        ],
+      ),
+      _SectionDef(
+        title: discount,
+        summary: _summary('Ex-Showroom: ${_formatValue(d['sp_482'])}'),
+        icon: Icons.discount_rounded,
+        iconColor: const Color(0xFFEC4899),
+        fields: [
+          _FieldData(discount, 'Ex-Showroom Price', _formatValue(d['sp_482'])),
+          _FieldData(discount, 'Less of All Encashment Scheme', _formatValue(d['sp_522'])),
+          _FieldData(discount, 'Subtotal', _formatValue(d['sp_503'])),
         ],
       ),
       _SectionDef(
