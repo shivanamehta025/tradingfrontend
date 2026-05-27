@@ -17,6 +17,9 @@ class _ChallanScreenState extends State<ChallanScreen>
 
   late AnimationController _animController;
   late Animation<double> _fadeAnim;
+  
+  // Date filter: 'challan' for Challan Date, 'expected' for Expected Delivery Date
+  String _dateFilter = 'challan';
 
   static const Color _primary = Color(0xFF1A56DB);
   static const Color _secondary = Color(0xFF3B82F6);
@@ -28,11 +31,17 @@ class _ChallanScreenState extends State<ChallanScreen>
   static const Color _gridBorder = Color(0xFFC7D2FE);
   static const Color _gridHeaderBorder = Color(0xFF93C5FD);
 
-  static const List<_ColDef> _columns = [
-    _ColDef(key: 'date', label: 'Date', flex: 3),
-    _ColDef(key: 'sp_468', label: 'Challan No', flex: 3),
-    _ColDef(key: 'sp_469', label: 'Customer Name', flex: 5),
-  ];
+  List<_ColDef> get _columns {
+    return [
+      _ColDef(
+        key: _dateFilter == 'challan' ? 'date' : 'exdate',
+        label: _dateFilter == 'challan' ? 'Challan Date' : 'Expected Delivery Date',
+        flex: 3,
+      ),
+      const _ColDef(key: 'sp_468', label: 'Challan No', flex: 3),
+      const _ColDef(key: 'sp_469', label: 'Customer Name', flex: 5),
+    ];
+  }
 
   @override
   void initState() {
@@ -91,7 +100,7 @@ class _ChallanScreenState extends State<ChallanScreen>
 
     String text = value.toString();
 
-    if (key == 'date' && text.contains('T')) {
+    if ((key == 'date' || key == 'exdate') && text.contains('T')) {
       text = text.split('T').first;
     }
 
@@ -422,6 +431,74 @@ class _ChallanScreenState extends State<ChallanScreen>
               ],
             ),
           ),
+          
+          // ── Date Filter Section ────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: _cardBg,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: _gridBorder,
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: _primary.withValues(alpha: 0.06),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.filter_list_rounded,
+                    size: 18,
+                    color: _textMid,
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    "Show Date:",
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: _textMid,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Row(
+                      children: [
+                        _FilterChip(
+                          label: "Challan Date",
+                          isSelected: _dateFilter == 'challan',
+                          onTap: () {
+                            setState(() {
+                              _dateFilter = 'challan';
+                            });
+                          },
+                        ),
+                        const SizedBox(width: 8),
+                        _FilterChip(
+                          label: "Expected Delivery",
+                          isSelected: _dateFilter == 'expected',
+                          onTap: () {
+                            setState(() {
+                              _dateFilter = 'expected';
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          
           Expanded(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -670,10 +747,10 @@ class _DataRow extends StatelessWidget {
                           maxLines: 2,
                           style: TextStyle(
                             fontSize: 12,
-                            fontWeight: col.key == 'date'
+                            fontWeight: (col.key == 'date' || col.key == 'exdate')
                                 ? FontWeight.w600
                                 : FontWeight.w700,
-                            color: col.key == 'date'
+                            color: (col.key == 'date' || col.key == 'exdate')
                                 ? const Color(0xFF475569)
                                 : const Color(0xFF1E293B),
                           ),
@@ -928,6 +1005,53 @@ class _SheetField extends StatelessWidget {
         fillColor: const Color(0xFFF8FAFF),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+    );
+  }
+}
+
+class _FilterChip extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _FilterChip({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+        decoration: BoxDecoration(
+          gradient: isSelected
+              ? const LinearGradient(
+                  colors: [Color(0xFF1A56DB), Color(0xFF3B82F6)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                )
+              : null,
+          color: isSelected ? null : const Color(0xFFF1F5F9),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isSelected
+                ? const Color(0xFF1A56DB)
+                : const Color(0xFFE2E8F0),
+            width: 1,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+            color: isSelected ? Colors.white : const Color(0xFF64748B),
+          ),
         ),
       ),
     );
