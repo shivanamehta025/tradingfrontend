@@ -75,7 +75,10 @@ class _ChallanScreenState extends State<ChallanScreen>
     _animController.reset();
 
     try {
-      final data = await ApiService.getChallanRetailIncentive();
+      // Pass dateType parameter based on current filter
+      final data = await ApiService.getChallanRetailIncentive(
+        dateType: _dateFilter,
+      );
 
       setState(() {
         _rows = List<Map<String, dynamic>>.from(data);
@@ -476,9 +479,12 @@ class _ChallanScreenState extends State<ChallanScreen>
                           label: "Challan Date",
                           isSelected: _dateFilter == 'challan',
                           onTap: () {
-                            setState(() {
-                              _dateFilter = 'challan';
-                            });
+                            if (_dateFilter != 'challan') {
+                              setState(() {
+                                _dateFilter = 'challan';
+                              });
+                              _loadData(); // Reload data with new filter
+                            }
                           },
                         ),
                         const SizedBox(width: 8),
@@ -486,9 +492,12 @@ class _ChallanScreenState extends State<ChallanScreen>
                           label: "Expected Delivery",
                           isSelected: _dateFilter == 'expected',
                           onTap: () {
-                            setState(() {
-                              _dateFilter = 'expected';
-                            });
+                            if (_dateFilter != 'expected') {
+                              setState(() {
+                                _dateFilter = 'expected';
+                              });
+                              _loadData(); // Reload data with new filter
+                            }
                           },
                         ),
                       ],

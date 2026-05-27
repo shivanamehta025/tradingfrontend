@@ -292,14 +292,15 @@ print(res.body);
 // ───────────────── CHALLAN ─────────────────
 
   /// Fetches Retail Incentive challans from the stored procedure.
-  /// Returns a list of maps with keys: date, sp_468, sp_469
-  static Future<List<Map<String, dynamic>>> getChallanRetailIncentive() async {
+  /// dateType: 'challan' (default) for Challan Date, 'expected' for Expected Delivery Date
+  /// Returns a list of maps with keys: date or exdate, sp_468, sp_469
+  static Future<List<Map<String, dynamic>>> getChallanRetailIncentive({String dateType = 'challan'}) async {
     try {
       final token = await getToken();
       if (token == null || token.isEmpty) return [];
 
       final res = await http.get(
-        Uri.parse("$baseUrl/api/challan/retail-incentive"),
+        Uri.parse("$baseUrl/api/challan/retail-incentive?dateType=$dateType"),
         headers: {
           "Content-Type": "application/json",
           "Authorization": "Bearer $token",
