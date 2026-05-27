@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
 import 'challan_edit_details_screen.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 class ChallanScreen extends StatefulWidget {
   const ChallanScreen({super.key});
@@ -14,7 +15,14 @@ class _ChallanScreenState extends State<ChallanScreen>
   bool _loading = true;
   String? _error;
   List<Map<String, dynamic>> _rows = [];
+late stt.SpeechToText _speech;
 
+bool _isListening = false;
+
+final TextEditingController _searchController =
+    TextEditingController();
+
+List<Map<String, dynamic>> _filteredRows = [];
   late AnimationController _animController;
   late Animation<double> _fadeAnim;
   
@@ -46,7 +54,7 @@ class _ChallanScreenState extends State<ChallanScreen>
   @override
   void initState() {
     super.initState();
-
+_speech = stt.SpeechToText();
     _animController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
@@ -58,6 +66,7 @@ class _ChallanScreenState extends State<ChallanScreen>
     );
 
     _loadData();
+   
   }
 
   @override
@@ -80,10 +89,14 @@ class _ChallanScreenState extends State<ChallanScreen>
         dateType: _dateFilter,
       );
 
-      setState(() {
-        _rows = List<Map<String, dynamic>>.from(data);
-        _loading = false;
-      });
+     setState(() {
+  _rows = List<Map<String, dynamic>>.from(data);
+
+  // IMPORTANT
+  _filteredRows = List<Map<String, dynamic>>.from(data);
+
+  _loading = false;
+});
 
       _animController.forward();
     } catch (e) {
@@ -109,6 +122,37 @@ class _ChallanScreenState extends State<ChallanScreen>
 
     return text;
   }
+void _filterSearch(String query) {
+  if (query.trim().isEmpty) {
+    setState(() {
+      _filteredRows = _rows;
+    });
+    return;
+  }
+
+  final q = query.toLowerCase();
+
+  setState(() {
+    _filteredRows = _rows.where((row) {
+      return row['sp_469']
+              .toString()
+              .toLowerCase()
+              .contains(q) ||
+          row['sp_468']
+              .toString()
+              .toLowerCase()
+              .contains(q) ||
+          row['date']
+              .toString()
+              .toLowerCase()
+              .contains(q) ||
+          row['exdate']
+              .toString()
+              .toLowerCase()
+              .contains(q);
+    }).toList();
+  });
+}
 
   void _onEdit(Map<String, dynamic> row) async {
     print("🔍 Edit clicked for row: $row");
@@ -146,7 +190,32 @@ class _ChallanScreenState extends State<ChallanScreen>
       _loadData();
     }
   }
+Future<void> _startListening() async {
+  bool available = await _speech.initialize();
 
+  if (available) {
+    setState(() {
+      _isListening = true;
+    });
+
+    _speech.listen(
+      onResult: (result) {
+        setState(() {
+          _searchController.text = result.recognizedWords;
+        });
+
+        _filterSearch(result.recognizedWords);
+      },
+    );
+  }
+}
+Future<void> _stopListening() async {
+  await _speech.stop();
+
+  setState(() {
+    _isListening = false;
+  });
+}
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -434,7 +503,75 @@ class _ChallanScreenState extends State<ChallanScreen>
               ],
             ),
           ),
-          
+          Padding(
+  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+  child: Container(
+    height: 52,
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(30),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.08),
+          blurRadius: 10,
+          offset: const Offset(0, 3),
+        ),
+      ],
+      border: Border.all(
+        color: const Color(0xFFE2E8F0),
+      ),
+    ),
+    child: Row(
+      children: [
+        const SizedBox(width: 14),
+
+        const Icon(
+          Icons.search,
+          color: Color(0xFF64748B),
+        ),
+
+        const SizedBox(width: 10),
+
+        Expanded(
+          child: TextField(
+            controller: _searchController,
+            onChanged: _filterSearch,
+            decoration: const InputDecoration(
+              hintText: "Search customer, challan no...",
+              border: InputBorder.none,
+            ),
+          ),
+        ),
+
+        GestureDetector(
+          onTap: () {
+            if (_isListening) {
+              _stopListening();
+            } else {
+              _startListening();
+            }
+          },
+          child: Container(
+            margin: const EdgeInsets.only(right: 8),
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: _isListening
+                  ? Colors.red
+                  : const Color(0xFF1A56DB),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              _isListening ? Icons.mic : Icons.mic_none,
+              color: Colors.white,
+              size: 20,
+            ),
+          ),
+        ),
+      ],
+    ),
+  ),
+),
           // ── Date Filter Section ────────────────────────────────────────
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
@@ -615,7 +752,7 @@ class _ChallanScreenState extends State<ChallanScreen>
 
   Widget _buildTableRows() {
     return ListView.separated(
-      itemCount: _rows.length,
+     itemCount: _filteredRows.length,
       separatorBuilder: (_, __) {
         return const Divider(
           height: 1,
@@ -624,7 +761,7 @@ class _ChallanScreenState extends State<ChallanScreen>
         );
       },
       itemBuilder: (context, index) {
-        final row = _rows[index];
+      final row = _filteredRows[index];
 
         return _DataRow(
           row: row,
