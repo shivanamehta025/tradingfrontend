@@ -191,22 +191,46 @@ void _filterSearch(String query) {
     }
   }
 Future<void> _startListening() async {
-  bool available = await _speech.initialize();
+  try {
+    bool available = await _speech.initialize(
+      onStatus: (status) {
+        print("Speech Status: $status");
 
-  if (available) {
-    setState(() {
-      _isListening = true;
-    });
+        if (status == 'done') {
+          setState(() {
+            _isListening = false;
+          });
+        }
+      },
+      onError: (error) {
+        print("Speech Error: $error");
 
-    _speech.listen(
-      onResult: (result) {
         setState(() {
-          _searchController.text = result.recognizedWords;
+          _isListening = false;
         });
-
-        _filterSearch(result.recognizedWords);
       },
     );
+
+    if (available) {
+      setState(() {
+        _isListening = true;
+      });
+
+      _speech.listen(
+        listenMode: stt.ListenMode.confirmation,
+        onResult: (result) {
+          setState(() {
+            _searchController.text = result.recognizedWords;
+          });
+
+          _filterSearch(result.recognizedWords);
+        },
+      );
+    } else {
+      print("Speech recognition unavailable");
+    }
+  } catch (e) {
+    print("Speech exception: $e");
   }
 }
 Future<void> _stopListening() async {
@@ -544,13 +568,13 @@ Future<void> _stopListening() async {
         ),
 
         GestureDetector(
-          onTap: () {
-            if (_isListening) {
-              _stopListening();
-            } else {
-              _startListening();
-            }
-          },
+        onTap: () async {
+  if (_isListening) {
+    await _stopListening();
+  } else {
+    await _startListening();
+  }
+},
           child: Container(
             margin: const EdgeInsets.only(right: 8),
             width: 38,
