@@ -1,461 +1,479 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
+
 import '../../services/api_service.dart';
 import '../home/home_screen.dart';
+import '../../utils/app_config.dart';
+
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
+
   @override
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _formKey        = GlobalKey<FormState>();
-  final companyCodeCtrl = TextEditingController();
-  final userIdCtrl      = TextEditingController();
-  final passwordCtrl    = TextEditingController();
-  bool isLoading        = false;
-  bool obscure          = true;
-  bool isValidatingCode = false;
-  bool? companyValid;
+  final _formKey = GlobalKey<FormState>();
 
-String databaseName = "";
-String companyName = "";
-String utg = "";  
+  final TextEditingController userIdCtrl =
+      TextEditingController();
 
-static const Color kRed      = Color(0xFF1565C0); // Blue
-static const Color kRedLight = Color(0xFF42A5F5); // Light Blue
-static const Color kRedDark  = Color(0xFF0D47A1); // Dark Blue
+  final TextEditingController passwordCtrl =
+      TextEditingController();
 
-  @override
-  void initState() {
-    super.initState();
-    ApiService.wakeServer();
-  }
+  bool obscure = true;
+  bool isLoading = false;
 
-  // Called when company code field loses focus
-  Future<void> _validateCompany() async {
-    final code = companyCodeCtrl.text.trim();
-    if (code.isEmpty) return;
-    setState(() => isValidatingCode = true);
-//final result = await ApiService.validateCompany(code);
-Map<String, dynamic> result =
-    await ApiService.validateCompany(code);
+  Future<void> login() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
 
-setState(() {
-  isValidatingCode = false;
+    setState(() {
+      isLoading = true;
+    });
 
-  //databaseName = result['databaseName'] ?? "";
-  //companyName  = result['companyName'] ?? "";
-  databaseName =
-    result['databaseName']?.toString() ?? "";
+    try {
+  final result = await ApiService.login(
+  databaseName: "CMPY_Q",
+  userId: userIdCtrl.text.trim(),
+  password: passwordCtrl.text.trim(),
+);
 
-companyName =
-    result['companyName']?.toString() ?? "";
+      if (!mounted) return;
 
-  companyValid = databaseName.isNotEmpty;
-});
+    
+
+      if (result != null &&
+          result['success'] == true) {
+
+            
+             AppConfig.allowedDatabases =
+      result['user']['SM63_14'] ?? '';
+
+      AppConfig.userName =
+    result['user']['sm63_6']
+        ?.toString() ?? '';
+
+      AppConfig.userId =
+      result['user']['sm63_5']
+          ?.toString() ?? '';
+print(
+      "userid: ${AppConfig.userId}");
+      print(
+      "username: ${AppConfig.userName}");
+
+      final token =
+    await FirebaseMessaging.instance
+        .getToken();
+
+print("FCM TOKEN = $token");
+
+if (token != null) {
+print("SAVE TOKEN USERID = ${AppConfig.userId}");
+print("SAVE TOKEN TOKEN = $token");
+  await ApiService.saveDeviceToken(
+
+    userId:AppConfig.userId,
+    userName: AppConfig.userName,
+    token: token,
+  );
+}
+
+  print(
+      "Allowed Databases: ${AppConfig.allowedDatabases}");
+       // Save login session
+  final prefs =
+      await SharedPreferences.getInstance();
+
+  await prefs.setBool(
+    "isLoggedIn",
+    true,
+  );
+
+  await prefs.setString(
+    "userId",
+    AppConfig.userId,
+  );
+
+  await prefs.setString(
+    "userName",
+    AppConfig.userName,
+  );
+
+  await prefs.setString(
+    "allowedDatabases",
+    AppConfig.allowedDatabases,
+  );
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => HomeScreen(
+              userName:
+                  result['userName'] ??
+                  userIdCtrl.text.trim(),
+              userEmail: '',
+            ),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Invalid User ID or Password',
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+        SnackBar(
+          content: Text(
+            'Login Failed: $e',
+          ),
+        ),
+      );
+    }
+
+    if (mounted) {
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 
   @override
   void dispose() {
-    companyCodeCtrl.dispose();
     userIdCtrl.dispose();
     passwordCtrl.dispose();
     super.dispose();
   }
 
-  Future<void> _login() async {
-    if (!_formKey.currentState!.validate()) return;
-    if (companyValid == false) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Invalid Company Code"),
-          backgroundColor: kRedDark,
-        ),
-      );
-      return;
-    }
-    setState(() => isLoading = true);
-    print("DATABASE NAME : $databaseName");
-print("USER ID       : ${userIdCtrl.text.trim()}");
-print("USER ID       : ${passwordCtrl.text.trim()}");
- final res = await ApiService.login(
-  databaseName: databaseName,
-  userId: userIdCtrl.text.trim(),
-  password: passwordCtrl.text.trim(),
-);
-    setState(() => isLoading = false);
-    if (!mounted) return;
-
-    if (res != null && res['token'] != null) {
-      // Save companyCode (not returned by server, so we store it from the form)
-      await ApiService.saveUserSession(
-        token:        res['token'],
-        userId:       res['userId']?.toString()       ?? userIdCtrl.text.trim(),
-        userName:     res['name']?.toString()         ?? userIdCtrl.text.trim(),
-        userEmail:    res['email']?.toString()        ?? '',
-        databaseName: res['databaseName']?.toString() ?? databaseName,
-        companyCode:  companyCodeCtrl.text.trim(),
-        utg:          res["utg"].toString(),
-      );
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => HomeScreen(
-            userName:  res['name']  ?? res['userId'] ?? 'User',
-            userEmail: res['email'] ?? '',
-          ),
-        ),
-      );
-      print(res["utg"].toString());
-    } else {
-      // Read the actual message from the server response
-      final msg = res?['message']?.toString() ?? "Invalid User ID or Password";
-
-      // Show a prominent dialog for device-lock errors
-      if (msg.toLowerCase().contains("another device")) {
-        await showDialog(
-          context: context,
-          builder: (_) => AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            icon: const Icon(Icons.devices_other_rounded,
-                color: Color(0xFF8B1E3F), size: 40),
-            title: const Text(
-              "Already Logged In",
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
-              textAlign: TextAlign.center,
-            ),
-            content: const Text(
-              "This account is already logged in on another device.\n\nPlease logout from that device first.",
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, height: 1.5),
-            ),
-            actionsAlignment: MainAxisAlignment.center,
-            actions: [
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF8B1E3F),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8)),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 32, vertical: 12),
-                ),
-                child: const Text("OK"),
-              ),
-            ],
-          ),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(msg),
-            backgroundColor: kRedDark,
-          ),
-        );
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F2F2),
-      body: Column(
-        children: [
-          // ── TOP BANNER ─────────────────────────────────────────────────
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 36),
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [kRedDark, kRed, kRedLight],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF081B29),
+              Color(0xFF0A2647),
+              Color(0xFF144272),
+            ],
+          ),
+        ),
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: CustomPaint(
+                painter: BackgroundPainter(),
               ),
             ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Car icon in circle
-                Container(
-                  width: 120, height: 120,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                        color: Colors.white.withOpacity(0.6), width: 3),
-                  ),
-                  child: const Icon(
-                    Icons.directions_car_rounded,
-                    size: 65,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 18),
-                const Text(
-                  "MY AUTOSHOP",
-                  style: TextStyle(
-                    fontSize: 30,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.white,
-                    letterSpacing: 3,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // ── FORM CARD ──────────────────────────────────────────────────
-          Expanded(
-            child: SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
+            Center(
+              child: SingleChildScrollView(
                 child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 28),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.07),
-                        blurRadius: 16,
-                        offset: const Offset(0, 4),
+                  width: 380,
+                  margin:
+                      const EdgeInsets.all(20),
+                  child: ClipRRect(
+                    borderRadius:
+                        BorderRadius.circular(
+                      30,
+                    ),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(
+                        sigmaX: 15,
+                        sigmaY: 15,
                       ),
-                    ],
-                  ),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Company Code
-                        _label("Company Code"),
-                        const SizedBox(height: 6),
-                        Focus(
-                          onFocusChange: (hasFocus) {
-                            if (!hasFocus) _validateCompany();
-                          },
-                          child: TextFormField(
-                            controller: companyCodeCtrl,
-                            validator: (v) => (v == null || v.trim().isEmpty)
-                                ? "Company code is required" : null,
-                            style: const TextStyle(fontSize: 14, color: Color(0xFF212121)),
-                            decoration: InputDecoration(
-                              hintText: "Enter company code",
-                              hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
-                              prefixIcon: const Icon(Icons.business_outlined, color: kRed, size: 20),
-                              suffixIcon: isValidatingCode
-                                  ? const Padding(
-                                      padding: EdgeInsets.all(12),
-                                      child: SizedBox(
-                                        width: 16, height: 16,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2, color: kRed,
-                                        ),
-                                      ),
-                                    )
-                                  : companyValid == true
-                                      ? const Icon(Icons.check_circle, color: Colors.green, size: 20)
-                                      : companyValid == false
-                                          ? const Icon(Icons.cancel, color: Colors.red, size: 20)
-                                          : null,
-                              filled: true,
-                              fillColor: const Color(0xFFFAFAFA),
-                              contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 4),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide: BorderSide(
-                                  color: companyValid == false
-                                      ? Colors.red
-                                      : companyValid == true
-                                          ? Colors.green
-                                          : const Color(0xFFE0E0E0),
-                                ),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide: BorderSide(
-                                  color: companyValid == false
-                                      ? Colors.red
-                                      : companyValid == true
-                                          ? Colors.green
-                                          : const Color(0xFFE0E0E0),
-                                ),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide: const BorderSide(color: kRed, width: 1.5),
-                              ),
-                              errorBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide: const BorderSide(color: Colors.red),
-                              ),
+                      child: Container(
+                        padding:
+                            const EdgeInsets.all(
+                          35,
+                        ),
+                        decoration:
+                            BoxDecoration(
+                          color: Colors.white
+                              .withOpacity(
+                            0.10,
+                          ),
+                          borderRadius:
+                              BorderRadius
+                                  .circular(
+                            30,
+                          ),
+                          border: Border.all(
+                            color: Colors.white
+                                .withOpacity(
+                              0.20,
                             ),
                           ),
                         ),
-                        if (companyValid == false)
-                          const Padding(
-                            padding: EdgeInsets.only(top: 4, left: 4),
-                            child: Text(
-                              "Company code not found",
-                              style: TextStyle(color: Colors.red, fontSize: 12),
-                            ),
-                          ),
-                        const SizedBox(height: 16),
-
-                        // User ID
-                        _label("User ID"),
-                        const SizedBox(height: 6),
-                        _field(
-                          ctrl:      userIdCtrl,
-                          hint:      "Enter your user ID",
-                          icon:      Icons.person_outline,
-                          validator: (v) => (v == null || v.trim().isEmpty)
-                              ? "User ID is required" : null,
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Password
-                        _label("Password"),
-                        const SizedBox(height: 6),
-                        _passwordField(),
-                        const SizedBox(height: 24),
-
-                        // Login button
-                        SizedBox(
-                          width: double.infinity,
-                          height: 50,
-                          child: ElevatedButton(
-                            onPressed: isLoading ? null : _login,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: kRed,
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            children: [
+                              Image.asset(
+                                "assets/logo.png",
+                                height: 180,
                               ),
-                            ),
-                            child: isLoading
-                                ? const SizedBox(
-                                    width: 22, height: 22,
-                                    child: CircularProgressIndicator(
-                                      color: Colors.white,
-                                      strokeWidth: 2.5,
+
+                              const SizedBox(
+                                height: 40,
+                              ),
+
+                              TextFormField(
+                                controller:
+                                    userIdCtrl,
+                                style:
+                                    const TextStyle(
+                                  color:
+                                      Colors
+                                          .white,
+                                ),
+                                validator:
+                                    (value) {
+                                  if (value ==
+                                          null ||
+                                      value
+                                          .trim()
+                                          .isEmpty) {
+                                    return 'Enter User ID';
+                                  }
+                                  return null;
+                                },
+                                decoration:
+                                    inputDecoration(
+                                  hint:
+                                      "User ID",
+                                  icon: Icons
+                                      .person_outline,
+                                ),
+                              ),
+
+                              const SizedBox(
+                                height: 20,
+                              ),
+
+                              TextFormField(
+                                controller:
+                                    passwordCtrl,
+                                obscureText:
+                                    obscure,
+                                style:
+                                    const TextStyle(
+                                  color:
+                                      Colors
+                                          .white,
+                                ),
+                                validator:
+                                    (value) {
+                                  if (value ==
+                                          null ||
+                                      value
+                                          .trim()
+                                          .isEmpty) {
+                                    return 'Enter Password';
+                                  }
+                                  return null;
+                                },
+                                decoration:
+                                    inputDecoration(
+                                  hint:
+                                      "Password",
+                                  icon: Icons
+                                      .lock_outline,
+                                  suffixIcon:
+                                      IconButton(
+                                    icon: Icon(
+                                      obscure
+                                          ? Icons
+                                              .visibility_off
+                                          : Icons
+                                              .visibility,
+                                      color: Colors
+                                          .white70,
                                     ),
-                                  )
-                                : const Text(
-                                    "Login",
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 1,
+                                    onPressed:
+                                        () {
+                                      setState(
+                                        () {
+                                          obscure =
+                                              !obscure;
+                                        },
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ),
+
+                              const SizedBox(
+                                height: 30,
+                              ),
+
+                              SizedBox(
+                                width: double
+                                    .infinity,
+                                height: 55,
+                                child:
+                                    ElevatedButton(
+                                  onPressed:
+                                      isLoading
+                                          ? null
+                                          : login,
+                                  style:
+                                      ElevatedButton
+                                          .styleFrom(
+                                    backgroundColor:
+                                        const Color(
+                                      0xFF2196F3,
+                                    ),
+                                    shape:
+                                        RoundedRectangleBorder(
+                                      borderRadius:
+                                          BorderRadius.circular(
+                                        16,
+                                      ),
                                     ),
                                   ),
+                                  child:
+                                      isLoading
+                                          ? const SizedBox(
+                                              width:
+                                                  22,
+                                              height:
+                                                  22,
+                                              child:
+                                                  CircularProgressIndicator(
+                                                color:
+                                                    Colors.white,
+                                                strokeWidth:
+                                                    2,
+                                              ),
+                                            )
+                                          : const Text(
+                                              "LOGIN",
+                                              style:
+                                                  TextStyle(
+                                                fontSize:
+                                                    16,
+                                                fontWeight:
+                                                    FontWeight.bold,
+                                              ),
+                                            ),
+                                ),
+                              ),
+
+                              const SizedBox(
+                                height: 25,
+                              ),
+
+                              Text(
+                                "© 2026 All Rights Reserved",
+                                style:
+                                    TextStyle(
+                                  color: Colors
+                                      .white
+                                      .withOpacity(
+                                    0.7,
+                                  ),
+                                ),
+                              ),
+
+                              const SizedBox(
+                                height: 5,
+                              ),
+
+                              const Text(
+                                "GULJAG INFOTECH",
+                                style:
+                                    TextStyle(
+                                  color:
+                                      Colors
+                                          .white,
+                                  fontWeight:
+                                      FontWeight
+                                          .bold,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  Widget _label(String text) => Text(
-        text,
-        style: const TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w600,
-          color: Color(0xFF333333),
-        ),
-      );
-
-  Widget _field({
-    required TextEditingController ctrl,
+  InputDecoration inputDecoration({
     required String hint,
     required IconData icon,
-    String? Function(String?)? validator,
+    Widget? suffixIcon,
   }) {
-    return TextFormField(
-      controller: ctrl,
-      validator: validator,
-      style: const TextStyle(fontSize: 14, color: Color(0xFF212121)),
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
-        prefixIcon: Icon(icon, color: kRed, size: 20),
-        filled: true,
-        fillColor: const Color(0xFFFAFAFA),
-        contentPadding:
-            const EdgeInsets.symmetric(vertical: 14, horizontal: 4),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: kRed, width: 1.5),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Colors.red),
-        ),
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: TextStyle(
+        color:
+            Colors.white.withOpacity(0.7),
+      ),
+      prefixIcon: Icon(
+        icon,
+        color: Colors.white70,
+      ),
+      suffixIcon: suffixIcon,
+      filled: true,
+      fillColor:
+          Colors.white.withOpacity(0.10),
+      border: OutlineInputBorder(
+        borderRadius:
+            BorderRadius.circular(16),
+        borderSide: BorderSide.none,
       ),
     );
   }
+}
 
-  Widget _passwordField() {
-    return TextFormField(
-      controller: passwordCtrl,
-      obscureText: obscure,
-      validator: (v) =>
-          (v == null || v.trim().isEmpty) ? "Password is required" : null,
-      style: const TextStyle(fontSize: 14, color: Color(0xFF212121)),
-      decoration: InputDecoration(
-        hintText: "Enter your password",
-        hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
-        prefixIcon:
-            const Icon(Icons.lock_outline, color: kRed, size: 20),
-        suffixIcon: IconButton(
-          icon: Icon(
-            obscure ? Icons.visibility_off : Icons.visibility,
-            color: Colors.grey.shade400,
-            size: 20,
-          ),
-          onPressed: () => setState(() => obscure = !obscure),
+class BackgroundPainter
+    extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color =
+          Colors.white.withOpacity(0.04)
+      ..strokeWidth = 1;
+
+    for (double i = -size.height;
+        i < size.width;
+        i += 45) {
+      canvas.drawLine(
+        Offset(i, 0),
+        Offset(
+          i + size.height,
+          size.height,
         ),
-        filled: true,
-        fillColor: const Color(0xFFFAFAFA),
-        contentPadding:
-            const EdgeInsets.symmetric(vertical: 14, horizontal: 4),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: kRed, width: 1.5),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Colors.red),
-        ),
-      ),
-    );
+        paint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(
+      CustomPainter oldDelegate) {
+    return false;
   }
 }

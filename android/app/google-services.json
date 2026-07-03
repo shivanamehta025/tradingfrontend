@@ -1,21 +1,40 @@
 {
   "project_info": {
-    "project_number": "754396208118",
-    "project_id": "myautoshop-394f2",
-    "storage_bucket": "myautoshop-394f2.firebasestorage.app"
+    "project_number": "63531580729",
+    "project_id": "trading-313cc",
+    "storage_bucket": "trading-313cc.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:754396208118:android:2cceca796f7289504545d7",
+        "mobilesdk_app_id": "1:63531580729:android:a676d6a63e63fec3cc3ce8",
         "android_client_info": {
-          "package_name": "com.example.car_app_flutter"
+          "package_name": "com.example.trading"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyCVNDK0vHbsiz3CqL7ew4R3AQWGMdoxpgw"
+          "current_key": "AIzaSyBSVRo_2IG8viufIbrs30N4y0GDmqQfYrY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:63531580729:android:3d936f8c09345fe5cc3ce8",
+        "android_client_info": {
+          "package_name": "com.example.trading"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBSVRo_2IG8viufIbrs30N4y0GDmqQfYrY"
         }
       ],
       "services": {

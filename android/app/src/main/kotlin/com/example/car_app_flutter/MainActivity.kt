@@ -1,4 +1,4 @@
-package com.example.car_app_flutter
+package com.example.trading
 
 import io.flutter.embedding.android.FlutterActivity
 

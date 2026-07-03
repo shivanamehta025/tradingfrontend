@@ -1,415 +1,313 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
-import '../../services/api_service.dart';
-//import '../../services/notification_service.dart';
-import '../auth/login_screen.dart';
-import '../challan/challan_screen.dart';
-import '../notification/notification_screen.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 
+import '../../utils/app_config.dart';
+import '../auth/login_screen.dart';
+import '../branch/branch_selection_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../notification/notification_screen.dart';
+import '../../services/api_service.dart';
+import '../dashboard/sales_dashboard_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final String userName;
   final String userEmail;
-  const HomeScreen({super.key, this.userName = "Student", this.userEmail = ""});
+
+  const HomeScreen({
+    super.key,
+    required this.userName,
+    required this.userEmail,
+  });
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
+class _HomeScreenState extends State<HomeScreen> {
+  int notificationCount = 0;
+  bool get canShowTrading =>
+      AppConfig.allowedDatabases
+          .toUpperCase()
+          .contains("TRADING");
 
-class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
-  Timer? _pendingChallanTimer;
-int unreadCount = 0;
-String utg = "";
-bool isLoading = true;
-  @override
-  void initState() {
-    super.initState();
-      loadSecurity();
-      loadUnreadCount();
-      requestNotificationPermission();
-      generateFCMToken();
-FirebaseMessaging.onMessage.listen(
+  bool get canShowNationalTrader =>
+      AppConfig.allowedDatabases
+          .toUpperCase()
+          .contains("NT");
 
-  (RemoteMessage message) {
+  Future<void> selectTrading() async {
 
-    print(
-      "NOTIFICATION RECEIVED"
-    );
+  AppConfig.selectedCompany = "Trading";
+  AppConfig.databaseName = "Testing";
 
-    print(
-      message.notification?.title
-    );
-
-    print(
-      message.notification?.body
-    );
-  },
-);
-    WidgetsBinding.instance.addObserver(this);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkPendingChallanNotifications();
-    });
-    _pendingChallanTimer = Timer.periodic(
-      const Duration(minutes: 1),
-      (_) => _checkPendingChallanNotifications(),
-    );
-  }
-  Future<void> loadSecurity() async {
-  utg = await ApiService.getUTG() ?? "";
-
-  print("USER GROUP : $utg");
-
-  setState(() {
-    isLoading = false;
-  });
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) =>
+          const SalesDashboardScreen(),
+    ),
+  );
 }
-Future<void> generateFCMToken() async {
+
+ Future<void> selectNationalTraders() async {
+
+  AppConfig.selectedCompany =
+      "National Traders";
+
+  AppConfig.databaseName =
+      "ac25";
+
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) =>
+          const SalesDashboardScreen(),
+    ),
+  );
+}
+
+Future<void> logout() async {
+  final prefs =
+      await SharedPreferences.getInstance();
+
+  await prefs.clear();
+
+  Navigator.pushAndRemoveUntil(
+    context,
+    MaterialPageRoute(
+      builder: (_) =>
+          const LoginScreen(),
+    ),
+    (route) => false,
+  );
+}
+
+@override
+void initState() {
+  super.initState();
+
+  loadNotificationCount();
+}
+
+Future<void> loadNotificationCount() async {
 
   try {
 
-    String? token =
-        await FirebaseMessaging.instance
-            .getToken();
+    final count =
+        await ApiService.getNotificationCount(
 
-    print("===============");
-    print("FCM TOKEN:");
-    print(token);
-    print("===============");
+      userId: AppConfig.userId,
 
-    if (token != null) {
+      allowedDatabases:
+          AppConfig.allowedDatabases,
+    );
 
-      await ApiService
-          .saveFCMToken(token);
-
-      print("FCM TOKEN SAVED");
-    }
+    setState(() {
+      notificationCount = count;
+    });
 
   } catch (e) {
 
-    print("FCM TOKEN ERROR:");
-    print(e);
-  }
-}
-Future<void>
-requestNotificationPermission() async {
-
-  NotificationSettings settings =
-
-      await FirebaseMessaging.instance
-          .requestPermission(
-
-    alert: true,
-    badge: true,
-    sound: true,
-  );
-
-  print(
-    "NOTIFICATION PERMISSION:"
-  );
-
-  print(settings.authorizationStatus);
-}
-Future<void> loadUnreadCount() async {
-
-  final count =
-      await ApiService
-          .getUnreadNotificationCount();
-
-  setState(() {
-    unreadCount = count;
-  });
-}
-  @override
-  void dispose() {
-    _pendingChallanTimer?.cancel();
-    WidgetsBinding.instance.removeObserver(this);
-    super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      _checkPendingChallanNotifications();
-    }
-  }
-
-  Future<void> _checkPendingChallanNotifications() async {
-    try {
-      final pendingChallans = await ApiService.getChallanRetailIncentive();
-      final count = pendingChallans.length;
-
-      if (!mounted || count == 0) return;
-
-      final alreadyNotified = await ApiService.getNotifiedPendingChallanIds();
-      final newPendingChallans = pendingChallans.where((row) {
-        return !alreadyNotified.contains(_pendingChallanId(row));
-      }).toList();
-
-      if (newPendingChallans.isEmpty) return;
-
-     
-
-      await ApiService.saveNotifiedPendingChallanIds({
-        ...alreadyNotified,
-        ...pendingChallans.map(_pendingChallanId),
-      });
-
-    } catch (e) {
-      print("PENDING CHALLAN NOTIFICATION ERROR: $e");
-    }
-  }
-
-  String _pendingChallanId(Map<String, dynamic> row) {
-    final id = row['sp_462']?.toString();
-    if (id != null && id.isNotEmpty) return id;
-
-    return [
-      row['sp_468']?.toString() ?? '',
-      row['sp_469']?.toString() ?? '',
-      row['date']?.toString() ?? '',
-    ].join('|');
-  }
-
-Future<void> _logout() async {
-
-  final confirm = await showDialog<bool>(
-    context: context,
-    builder: (_) => AlertDialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      title: const Text(
-        "Logout",
-        style: TextStyle(fontWeight: FontWeight.bold),
-      ),
-      content: const Text(
-        "Are you sure you want to logout?",
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context, false),
-          child: const Text("Cancel"),
-        ),
-        ElevatedButton(
-          onPressed: () => Navigator.pop(context, true),
-          style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFF1565C0),
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-          child: const Text("Logout"),
-        ),
-      ],
-    ),
-  );
-
-  if (confirm == true) {
-
-    try {
-
-      // GET TOKEN
-      final token = await ApiService.getToken();
-
-      // CALL LOGOUT API
-      await ApiService.logout(token ?? "");
-
-    } catch (e) {
-      print("LOGOUT ERROR: $e");
-    }
-
-    // CLEAR LOCAL SESSION
-    await ApiService.clearSession();
-
-    if (!mounted) return;
-
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const LoginScreen(),
-      ),
-      (_) => false,
+    debugPrint(
+      "Notification Count Error: $e",
     );
   }
 }
-
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F6FB),
+      backgroundColor:
+          const Color(0xFFF1F5F9),
+
       body: Column(
         children: [
-          // ── HEADER ────────────────────────────────────────────────────
+          /// HEADER
           Container(
-            decoration: const BoxDecoration(
+            decoration:
+                const BoxDecoration(
               gradient: LinearGradient(
-                colors: [Color(0xFF0D47A1), Color(0xFF1565C0), Color(0xFF42A5F5)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFF1565C0),
+                  Color(0xFF42A5F5),
+                ],
               ),
-              boxShadow: [
-                BoxShadow(
-               color: Color(0x441565C0),
-                  blurRadius: 16,
-                  offset: Offset(0, 4),
-                ),
-              ],
             ),
+
             child: SafeArea(
               bottom: false,
+
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
+                padding:
+                    const EdgeInsets.fromLTRB(
+                  20,
+                  14,
+                  20,
+                  20,
+                ),
+
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisAlignment:
+                      MainAxisAlignment
+                          .spaceBetween,
+
                   children: [
-                    Row(children: [
-                      Container(
-                        width: 40, height: 40,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(10),
+                    Row(
+                      children: [
+                        Container(
+  width: 52,
+  height: 52,
+  decoration: BoxDecoration(
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(14),
+    boxShadow: [
+      BoxShadow(
+        color: Colors.black.withOpacity(0.08),
+        blurRadius: 8,
+        offset: const Offset(0, 3),
+      ),
+    ],
+  ),
+  padding: const EdgeInsets.all(6),
+  child: Image.asset(
+    'assets/logo.png',
+    fit: BoxFit.contain,
+  ),
+),
+
+                        const SizedBox(
+                            width: 12),
+
+                        Column(
+                          crossAxisAlignment:
+                              CrossAxisAlignment
+                                  .start,
+
+                          children: [
+                           const Text(
+  "Q SOFTWARE",
+  style: TextStyle(
+    fontSize: 24,
+    fontWeight: FontWeight.bold,
+    color: Colors.white,
+    letterSpacing: 0.5,
+  ),
+),
+                           Text(
+  "Smart Business Platform",
+  style: TextStyle(
+    color: Colors.white.withOpacity(0.85),
+    fontSize: 12,
+  ),
+),
+                          ],
                         ),
-                        child: const Icon(Icons.directions_car_rounded,
-                            color: Colors.white, size: 22),
-                      ),
-                      const SizedBox(width: 12),
-                      Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        const Text(
-                          "MyAutoShop",
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.white,
-                            letterSpacing: 1,
-                          ),
-                        ),
-                        Text(
-                          "Your trusted auto service",
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.75),
-                            fontSize: 11,
-                          ),
-                        ),
-                      ]),
-                    ]),
+                      ],
+                    ),
+
                    Row(
   children: [
 
-    // NOTIFICATION BUTTON
-Stack(
-  children: [
-
-    // NOTIFICATION BUTTON
+    /// NOTIFICATION BELL
     GestureDetector(
-
       onTap: () async {
 
-        await Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) =>
-                const NotificationScreen(),
+  await Navigator.push(
+
+    context,
+
+    MaterialPageRoute(
+      builder: (_) =>
+          const NotificationScreen(),
+    ),
+  );
+
+  loadNotificationCount();
+},
+
+      child: Stack(
+        children: [
+
+          Container(
+            width: 42,
+            height: 42,
+
+            decoration: BoxDecoration(
+              color: Colors.white
+                  .withOpacity(0.20),
+
+              borderRadius:
+                  BorderRadius.circular(12),
+            ),
+
+            child: const Icon(
+              Icons.notifications_none_rounded,
+              color: Colors.white,
+            ),
           ),
-        );
 
-        // REFRESH UNREAD COUNT
-        await loadUnreadCount();
-      },
+         if (notificationCount > 0)
 
-      child: Container(
+Positioned(
+  right: 0,
+  top: 0,
 
-        width: 38,
-        height: 38,
+  child: Container(
+    width: 18,
+    height: 18,
 
-        margin: const EdgeInsets.only(
-          right: 10,
-        ),
+    decoration:
+        const BoxDecoration(
+      color: Colors.red,
+      shape: BoxShape.circle,
+    ),
 
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.2),
-          borderRadius:
-              BorderRadius.circular(10),
-          border: Border.all(
-            color: Colors.white.withOpacity(0.35),
-          ),
-        ),
+    child: Center(
+      child: Text(
 
-        child: const Icon(
-          Icons.notifications,
+        notificationCount > 99
+            ? "99+"
+            : notificationCount.toString(),
+
+        style: const TextStyle(
           color: Colors.white,
-          size: 18,
+          fontSize: 10,
+          fontWeight:
+              FontWeight.bold,
         ),
       ),
     ),
-
-    // UNREAD BADGE
-    if (unreadCount > 0)
-
-      Positioned(
-
-        right: 6,
-        top: 2,
-
-        child: Container(
-
-          padding:
-              const EdgeInsets.all(4),
-
-          decoration: const BoxDecoration(
-            color: Colors.red,
-            shape: BoxShape.circle,
-          ),
-
-          constraints: const BoxConstraints(
-            minWidth: 18,
-            minHeight: 18,
-          ),
-
-          child: Text(
-
-            unreadCount > 99
-                ? "99+"
-                : unreadCount.toString(),
-
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
-            ),
-
-            textAlign: TextAlign.center,
-          ),
-        ),
-      ),
-  ],
+  ),
 ),
+             
+        ],
+      ),
+    ),
 
-    // LOGOUT BUTTON
+    const SizedBox(width: 10),
+
+    /// LOGOUT
     GestureDetector(
-      onTap: _logout,
+      onTap: logout,
 
       child: Container(
-        width: 38,
-        height: 38,
+        width: 42,
+        height: 42,
 
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.2),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: Colors.white.withOpacity(0.35),
+          color:
+              Colors.white.withOpacity(
+            0.20,
+          ),
+
+          borderRadius:
+              BorderRadius.circular(
+            12,
           ),
         ),
 
         child: const Icon(
           Icons.logout_rounded,
           color: Colors.white,
-          size: 18,
         ),
       ),
     ),
@@ -421,63 +319,105 @@ Stack(
             ),
           ),
 
-          // ── BODY ──────────────────────────────────────────────────────
+          /// BODY
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Welcome row
-                  Row(children: [
-                    const Text("👋 ", style: TextStyle(fontSize: 22)),
-                    RichText(
-                      text: TextSpan(
-                        style: const TextStyle(fontSize: 18, color: Color(0xFF1A1A2E)),
-                        children: [
-                          const TextSpan(text: "Welcome, "),
-                          TextSpan(
-                            text: widget.userName.split(' ').first,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                        color: Color(0xFF1565C0),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ]),
-                  const SizedBox(height: 4),
-                  Text(
-                    "What would you like to do today?",
-                    style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
-                  ),
-                  const SizedBox(height: 24),
+            child:
+                SingleChildScrollView(
+              padding:
+                  const EdgeInsets.all(
+                20,
+              ),
 
-                  // ── DASHBOARD CARDS ───────────────────────────────────
-                  Row(children: [
-                   if (utg == "4848C835-2A09-4A80-A7E2-383C95926C54")
-  Expanded(
-    child: _dashCard(
-      icon: Icons.receipt_long_rounded,
-      label: "Challan",
-      subtitle: "View & manage challans",
-      gradient: [
-        const Color(0xFF1565C0),
-        const Color(0xFF1E88E5)
-      ],
-      accentColor: const Color(0xFF82B1FF),
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => const ChallanScreen(),
-          ),
-        );
-      },
-    ),
-  ),
-                  ]),
+              child: Column(
+                crossAxisAlignment:
+                    CrossAxisAlignment
+                        .start,
+
+                children: [
+                  /// Welcome
+                  Row(
+                    children: [
+                      const Text(
+                        "👋 ",
+                        style:
+                            TextStyle(
+                          fontSize:
+                              24,
+                        ),
+                      ),
+
+                      RichText(
+                        text: TextSpan(
+                          style:
+                              const TextStyle(
+                            fontSize:
+                                22,
+                            color: Color(
+                                0xFF1E293B),
+                          ),
+                          children: [
+                            const TextSpan(
+                              text:
+                                  "Welcome, ",
+                            ),
+                            TextSpan(
+                              text: AppConfig
+                                  .userName,
+                              style:
+                                  const TextStyle(
+                                color: Color(
+                                    0xFF1565C0),
+                                fontWeight:
+                                    FontWeight
+                                        .bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(
+                    height: 8,
+                  ),
+
+                  const Text(
+                    "Select your company to continue",
+                    style: TextStyle(
+                      color:
+                          Color(0xFF64748B),
+                      fontSize: 14,
+                    ),
+                  ),
+
+                  const SizedBox(
+                    height: 28,
+                  ),
+
+                  /// COMPANY CARDS
+                  if (canShowTrading)
+                    companyCard(
+                      title: "Trading",
+                      subtitle:
+                          "Accounting Management",
+                      icon: Icons
+                          .trending_up_rounded,
+                      onTap:
+                          selectTrading,
+                    ),
+
+                  if (canShowNationalTrader)
+                    companyCard(
+                      title:
+                          "National Traders",
+                      subtitle:
+                          "Trading Division",
+                      icon: Icons
+                          .business_center_rounded,
+                      onTap:
+                          selectNationalTraders,
+                    ),
                 ],
               ),
             ),
@@ -487,83 +427,193 @@ Stack(
     );
   }
 
-  Widget _dashCard({
-    required IconData icon,
-    required String label,
+  Widget companyCard({
+    required String title,
     required String subtitle,
-    required List<Color> gradient,
-    required Color accentColor,
+    required IconData icon,
     required VoidCallback onTap,
   }) {
+    final gradient =
+        title == "Trading"
+            ? const [
+                Color(0xFF0A3D8F),
+                Color(0xFF1565C0),
+                Color(0xFF1E88E5),
+              ]
+            : const [
+                Color(0xFF0A5C2E),
+                Color(0xFF1A7A40),
+                Color(0xFF2EAA5C),
+              ];
+
     return GestureDetector(
       onTap: onTap,
+
       child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
+        margin:
+            const EdgeInsets.only(
+          bottom: 18,
+        ),
+
+        padding:
+            const EdgeInsets.all(
+          20,
+        ),
+
+        decoration:
+            BoxDecoration(
+          gradient:
+              LinearGradient(
             colors: gradient,
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+            begin:
+                Alignment.topLeft,
+            end: Alignment
+                .bottomRight,
           ),
-          borderRadius: BorderRadius.circular(22),
+
+          borderRadius:
+              BorderRadius.circular(
+            24,
+          ),
+
           boxShadow: [
             BoxShadow(
-              color: gradient[0].withOpacity(0.4),
+              color: gradient.first
+                  .withOpacity(
+                0.35,
+              ),
               blurRadius: 18,
-              offset: const Offset(0, 7),
+              offset:
+                  const Offset(
+                0,
+                8,
+              ),
             ),
           ],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+
+        child: Row(
           children: [
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-              // Icon bubble
-              Container(
-                width: 48, height: 48,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Icon(icon, color: Colors.white, size: 26),
-              ),
-              // Arrow chip
-              Container(
-                width: 28, height: 28,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.18),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(Icons.arrow_forward_ios_rounded,
-                    size: 13, color: Colors.white),
-              ),
-            ]),
-            const SizedBox(height: 18),
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w800,
-                color: Colors.white,
-                letterSpacing: 0.3,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              subtitle,
-              style: TextStyle(
-                fontSize: 11,
-                color: Colors.white.withOpacity(0.78),
-                height: 1.3,
-              ),
-            ),
-            const SizedBox(height: 14),
-            // Bottom accent bar
             Container(
-              height: 3,
-              decoration: BoxDecoration(
-                color: accentColor.withOpacity(0.6),
-                borderRadius: BorderRadius.circular(4),
+              width: 56,
+              height: 56,
+
+              decoration:
+                  BoxDecoration(
+                color: Colors.white
+                    .withOpacity(
+                  0.18,
+                ),
+
+                borderRadius:
+                    BorderRadius
+                        .circular(
+                  16,
+                ),
+              ),
+
+              child: Icon(
+                icon,
+                color:
+                    Colors.white,
+                size: 28,
+              ),
+            ),
+
+            const SizedBox(
+              width: 16,
+            ),
+
+            Expanded(
+              child: Column(
+                crossAxisAlignment:
+                    CrossAxisAlignment
+                        .start,
+
+                children: [
+                  Text(
+                    title,
+                    style:
+                        const TextStyle(
+                      color:
+                          Colors.white,
+                      fontSize:
+                          22,
+                      fontWeight:
+                          FontWeight
+                              .w800,
+                    ),
+                  ),
+
+                  const SizedBox(
+                    height: 4,
+                  ),
+
+                  Text(
+                    subtitle,
+                    style:
+                        TextStyle(
+                      color: Colors
+                          .white
+                          .withOpacity(
+                        0.85,
+                      ),
+                      fontSize:
+                          13,
+                    ),
+                  ),
+
+                  const SizedBox(
+                    height: 12,
+                  ),
+
+                  Container(
+                    width: 70,
+                    height: 3,
+
+                    decoration:
+                        BoxDecoration(
+                      color: Colors
+                          .white
+                          .withOpacity(
+                        0.45,
+                      ),
+
+                      borderRadius:
+                          BorderRadius
+                              .circular(
+                        10,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            Container(
+              width: 34,
+              height: 34,
+
+              decoration:
+                  BoxDecoration(
+                color: Colors.white
+                    .withOpacity(
+                  0.18,
+                ),
+
+                borderRadius:
+                    BorderRadius
+                        .circular(
+                  10,
+                ),
+              ),
+
+              child: const Icon(
+                Icons
+                    .arrow_forward_ios_rounded,
+                size: 15,
+                color:
+                    Colors.white,
               ),
             ),
           ],

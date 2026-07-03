@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+
 import '../../services/api_service.dart';
+import '../../utils/app_config.dart';
+import '../chat/chat_screen.dart';
 
 class NotificationScreen extends StatefulWidget {
-
-  const NotificationScreen({super.key});
+  const NotificationScreen({
+    super.key,
+  });
 
   @override
   State<NotificationScreen> createState() =>
@@ -13,216 +17,610 @@ class NotificationScreen extends StatefulWidget {
 class _NotificationScreenState
     extends State<NotificationScreen> {
 
-  List<Map<String, dynamic>> notifications = [];
+  List<dynamic> notifications = [];
+List<dynamic> filteredNotifications = [];
 
-  bool isLoading = true;
+String selectedFilter = "ALL";
+
+List<Map<String, String>> availableCompanies = [];
+
+  bool loading = true;
 
   @override
   void initState() {
     super.initState();
-
-    // LOAD NOTIFICATIONS
     loadNotifications();
   }
 
   Future<void> loadNotifications() async {
 
-    final data =
-        await ApiService.getNotifications();
+  try {
 
-    if (!mounted) return;
+    notifications =
+        await ApiService.getNotifications(
+      userId: AppConfig.userId,
+      allowedDatabases:
+          AppConfig.allowedDatabases,
+    );
 
-    setState(() {
-      notifications = data;
-      isLoading = false;
+    // ==========================
+    // STEP 2 STARTS HERE
+    // ==========================
+
+    availableCompanies.clear();
+
+    availableCompanies.add({
+      "code": "ALL",
+      "name": "All",
     });
+
+    final dbs =
+        AppConfig.allowedDatabases.split(",");
+
+    for (var db in dbs) {
+
+      if (db.trim() == "TRADING") {
+
+        availableCompanies.add({
+          "code": "Testing",
+          "name": "Trading",
+        });
+      }
+
+      if (db.trim() == "NT") {
+
+        availableCompanies.add({
+          "code": "ac25",
+          "name": "National Traders",
+        });
+      }
+    }
+
+    filteredNotifications =
+        List.from(notifications);
+
+    // ==========================
+    // STEP 2 ENDS HERE
+    // ==========================
+
+  } catch (e) {
+
+    debugPrint(e.toString());
   }
+
+  setState(() {
+    loading = false;
+  });
+}
+
+void applyFilter(String dbName) {
+
+  setState(() {
+
+    selectedFilter = dbName;
+
+    if (dbName == "ALL") {
+
+      filteredNotifications =
+          List.from(notifications);
+
+    } else {
+
+      filteredNotifications =
+          notifications.where((x) {
+
+        return x["DATABASENAME"]
+            .toString()
+            .toLowerCase() ==
+            dbName.toLowerCase();
+
+      }).toList();
+    }
+  });
+}
 
   @override
   Widget build(BuildContext context) {
 
+    final Map<String, String> companyMap = {
+
+  "Testing": "Trading",
+
+  "ac25": "National Traders",
+};
+
     return Scaffold(
 
+      backgroundColor:
+          const Color(0xFFF5F7FA),
+
       appBar: AppBar(
-        title: const Text("Notifications"),
+
+        title: const Text(
+          "Notifications",
+        ),
+
+        centerTitle: true,
       ),
 
-      body: isLoading
+body: loading
 
-          ? const Center(
-              child: CircularProgressIndicator(),
-            )
+    ? const Center(
+        child: CircularProgressIndicator(),
+      )
 
-          : notifications.isEmpty
+    : notifications.isEmpty
 
-              ? const Center(
-                  child: Text(
-                    "No notifications",
-                  ),
-                )
+        ? const Center(
+            child: Text(
+              "No Notifications",
+              style: TextStyle(
+                fontSize: 16,
+              ),
+            ),
+          )
 
-              : ListView.builder(
+        : RefreshIndicator(
 
-                  itemCount: notifications.length,
+            onRefresh: loadNotifications,
 
-                  itemBuilder: (context, index) {
+            child: Column(
 
-                    final item =
-                        notifications[index];
+              children: [
 
-                    return Container(
+                // =========================
+                // COMPANY FILTER CHIPS
+                // =========================
 
-                      margin:
-                          const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
+                SizedBox(
 
-                      decoration: BoxDecoration(
+                  height: 55,
 
-                        color:
+                  child: ListView.builder(
 
-                            item["is_read"] == true ||
-                                    item["is_read"] == 1
+                    scrollDirection:
+                        Axis.horizontal,
 
-                                ? Colors.white
+                    padding:
+                        const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
 
-                                : Colors.blue.shade50,
+                    itemCount:
+                        availableCompanies.length,
 
-                        borderRadius:
-                            BorderRadius.circular(16),
+                    itemBuilder:
+                        (context, index) {
 
-                        border: Border.all(
-                          color: Colors.blue.shade100,
-                          width: 1.2,
+                      final company =
+                          availableCompanies[index];
+
+                      return Padding(
+
+                        padding:
+                            const EdgeInsets.only(
+                          right: 8,
                         ),
 
-                        boxShadow: [
-                          BoxShadow(
-                            color:
-                                Colors.blue.withOpacity(0.08),
-                            blurRadius: 20,
-                            offset: const Offset(0, 6),
+                        child: ChoiceChip(
+
+                          label: Text(
+                            company["name"]!,
                           ),
-                        ],
-                      ),
 
-                      child: Material(
+                          selected:
+                              selectedFilter ==
+                                  company["code"],
 
-                        color: Colors.transparent,
+                          onSelected: (_) {
+
+                            applyFilter(
+                              company["code"]!,
+                            );
+                          },
+                        ),
+                      );
+                    },
+                  ),
+                ),
+
+                // =========================
+                // NOTIFICATION LIST
+                // =========================
+
+                Expanded(
+
+                  child: ListView.builder(
+
+                    padding:
+                        const EdgeInsets.all(12),
+
+                    itemCount:
+                        filteredNotifications.length,
+
+                    itemBuilder:
+                        (context, index) {
+
+                      final item =
+                          filteredNotifications[index];
+
+                      final isRead =
+                          item["ISREAD"] == 1 ||
+                          item["ISREAD"] == true ||
+                          item["ISREAD"]
+                                  ?.toString() ==
+                              "1";
+
+                      return Card(
+
+                        margin:
+                            const EdgeInsets.only(
+                          bottom: 12,
+                        ),
+
+                        elevation:
+                            isRead ? 1 : 3,
+
+                        color: isRead
+                            ? Colors.grey.shade100
+                            : const Color(
+                                0xFFFFF4F4),
+
+                        shape:
+                            RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(
+                            15,
+                          ),
+                        ),
 
                         child: ListTile(
 
-                          onTap: () async {
+                          contentPadding:
+                              const EdgeInsets.all(
+                            12,
+                          ),
 
-                            await ApiService
-                                .markNotificationAsRead(
-                              item["id"].toString(),
-                            );
+                       onTap: () async {
 
-                            loadNotifications();
-                          },
+  if (!isRead) {
 
-                          leading: CircleAvatar(
+    await ApiService
+        .markNotificationRead(
+
+      id: item["ID"],
+
+      databaseName:
+          item["DATABASENAME"],
+    );
+
+    setState(() {
+
+      item["ISREAD"] = 1;
+    });
+  }
+
+  // CHAT NOTIFICATION
+
+  if (item["DOCUMENTTYPE"] ==
+      "CHAT") {
+
+    Navigator.push(
+
+      context,
+
+      MaterialPageRoute(
+
+        builder: (_) => ChatScreen(
+
+          databaseName:
+              item["DATABASENAME"],
+
+          targetUser:
+              item["FROMUSER"],
+
+          targetName:
+              item["TITLE"],
+        ),
+      ),
+    );
+  }
+},
+
+                          leading:
+                              CircleAvatar(
+
+                            radius: 24,
 
                             backgroundColor:
-
-                                item["type"] ==
-                                        "CHALLAN_APPROVED"
-
-                                    ? Colors.green.shade100
-
-                                    : Colors.red.shade100,
+                                isRead
+                                    ? Colors.grey
+                                        .shade300
+                                    : Colors.blue
+                                        .shade100,
 
                             child: Icon(
 
-                              item["type"] ==
-                                      "CHALLAN_APPROVED"
+                              Icons.notifications,
 
-                                  ? Icons.check
-
-                                  : Icons.close,
-
-                              color:
-                                  item["type"] ==
-                                          "CHALLAN_APPROVED"
-
-                                      ? Colors.green
-
-                                      : Colors.red,
+                              color: isRead
+                                  ? Colors.grey
+                                  : Colors.blue,
                             ),
                           ),
 
-                          title: Text(
+                          title: Column(
 
-                            item["title"] ?? "",
+                            crossAxisAlignment:
+                                CrossAxisAlignment
+                                    .start,
 
-                            style: TextStyle(
+                            children: [
 
-                              fontWeight:
+                              // COMPANY NAME
 
-                                  item["is_read"] == true ||
-                                          item["is_read"] == 1
+                              Text(
 
-                                      ? FontWeight.normal
+  companyMap[
+      item["DATABASENAME"]] ??
+      item["DATABASENAME"],
 
-                                      : FontWeight.bold,
-                            ),
+  style: const TextStyle(
+
+    color: Colors.blue,
+
+    fontSize: 11,
+
+    fontWeight: FontWeight.w600,
+  ),
+),
+
+                              const SizedBox(
+                                height: 3,
+                              ),
+
+                              Row(
+
+                                children: [
+
+                                  Expanded(
+
+                                    child: Text(
+
+                                      item["TITLE"] ??
+                                          "",
+
+                                      style:
+                                          TextStyle(
+
+                                        fontWeight:
+                                            isRead
+                                                ? FontWeight
+                                                    .normal
+                                                : FontWeight
+                                                    .bold,
+
+                                        color:
+                                            isRead
+                                                ? Colors
+                                                    .grey
+                                                : Colors
+                                                    .black,
+                                      ),
+                                    ),
+                                  ),
+
+                                  InkWell(
+
+                                    onTap: () {
+
+                                      Navigator.push(
+
+                                        context,
+
+                                        MaterialPageRoute(
+
+                                          builder: (_) =>
+                                             ChatScreen(
+
+  databaseName:
+      item["DATABASENAME"],
+
+  targetUser:
+      item["USERID"],
+
+  targetName:
+      item["USERID"],
+),
+                                        ),
+                                      );
+                                    },
+
+                                    child:
+                                        Container(
+
+                                      padding:
+                                          const EdgeInsets.symmetric(
+                                        horizontal:
+                                            8,
+                                        vertical: 4,
+                                      ),
+
+                                      decoration:
+                                          BoxDecoration(
+
+                                        color: Colors
+                                            .blue
+                                            .shade50,
+
+                                        borderRadius:
+                                            BorderRadius.circular(
+                                          8,
+                                        ),
+                                      ),
+
+                                      child:
+                                          const Row(
+
+                                        mainAxisSize:
+                                            MainAxisSize
+                                                .min,
+
+                                        children: [
+
+                                          Icon(
+                                            Icons
+                                                .chat_bubble_outline,
+                                            size: 14,
+                                            color:
+                                                Colors
+                                                    .blue,
+                                          ),
+
+                                          SizedBox(
+                                              width:
+                                                  4),
+
+                                          Text(
+
+                                            "Chat",
+
+                                            style:
+                                                TextStyle(
+
+                                              color:
+                                                  Colors
+                                                      .blue,
+
+                                              fontSize:
+                                                  11,
+
+                                              fontWeight:
+                                                  FontWeight
+                                                      .w600,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
 
-                          subtitle: Text(
-                            item["message"] ?? "",
+                          subtitle: Padding(
+
+                            padding:
+                                const EdgeInsets.only(
+                              top: 6,
+                            ),
+
+                            child: Text(
+
+                              item["MESSAGE"] ??
+                                  "",
+
+                              style: TextStyle(
+
+                                color:
+                                    isRead
+                                        ? Colors.grey
+                                        : Colors.black87,
+                              ),
+                            ),
                           ),
 
                           trailing: Column(
 
                             mainAxisAlignment:
-                                MainAxisAlignment.center,
-
-                            crossAxisAlignment:
-                                CrossAxisAlignment.end,
+                                MainAxisAlignment
+                                    .center,
 
                             children: [
 
-                              Text(
+                              Container(
 
-                                item["created_on"]
-                                        ?.toString()
-                                        .split("T")
-                                        .first ??
+                                padding:
+                                    const EdgeInsets.symmetric(
+                                  horizontal:
+                                      8,
+                                  vertical: 4,
+                                ),
 
-                                    "",
+                                decoration:
+                                    BoxDecoration(
 
-                                style: const TextStyle(
-                                  fontSize: 11,
+                                  color: isRead
+                                      ? Colors.grey
+                                          .shade300
+                                      : Colors.red
+                                          .shade100,
+
+                                  borderRadius:
+                                      BorderRadius.circular(
+                                    12,
+                                  ),
+                                ),
+
+                                child: Text(
+
+                                  isRead
+                                      ? "READ"
+                                      : "NEW",
+
+                                  style:
+                                      TextStyle(
+
+                                    color:
+                                        isRead
+                                            ? Colors
+                                                .black54
+                                            : Colors
+                                                .red,
+
+                                    fontSize:
+                                        10,
+
+                                    fontWeight:
+                                        FontWeight
+                                            .bold,
+                                  ),
                                 ),
                               ),
 
-                              const SizedBox(height: 4),
+                              const SizedBox(
+                                height: 5,
+                              ),
 
-                              if (
-                                  item["is_read"] != true &&
-                                  item["is_read"] != 1
-                              )
+                              Text(
 
-                                Container(
+                                item["CREATEDON"]
+                                        ?.toString()
+                                        .substring(
+                                            0, 10) ??
+                                    "",
 
-                                  width: 8,
-                                  height: 8,
+                                style:
+                                    const TextStyle(
 
-                                  decoration:
-                                      const BoxDecoration(
-                                    color: Colors.red,
-                                    shape: BoxShape.circle,
-                                  ),
+                                  fontSize: 10,
+
+                                  color:
+                                      Colors.grey,
                                 ),
+                              ),
                             ],
                           ),
                         ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
+              ],
+            ),
+          ),
     );
   }
 }

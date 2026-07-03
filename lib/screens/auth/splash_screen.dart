@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
-import '../home/home_screen.dart';
 import 'login_screen.dart';
+import '../home/home_screen.dart';
 
 /// Shown at app startup.
 /// Checks for a saved session token — if found, goes straight to HomeScreen.
@@ -99,14 +99,14 @@ static const Color kRedDark = Color(0xFF0D47A1); // Dark Blue
                   ),
                 ),
                 child: const Icon(
-                  Icons.directions_car_rounded,
+                  Icons.calculate,
                   size: 90,
                   color: Colors.white,
                 ),
               ),
               const SizedBox(height: 24),
               const Text(
-                "MY AUTOSHOP",
+                "Q",
                 style: TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.w900,

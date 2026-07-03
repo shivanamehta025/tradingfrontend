@@ -8,11 +8,11 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  static const String baseUrl = "https://autoshop-ekvt.onrender.com";
+  static const String baseUrl = "https://api.guljaginfotech.in";
 
   static const _storage = FlutterSecureStorage(
     webOptions: WebOptions(
-      dbName: 'autoshop_db',
+      dbName: 'cmpy_q',
       publicKey: 'as_key_2024',
     ),
   );
@@ -72,6 +72,27 @@ class ApiService {
     };
   }
 
+  static Future<List<dynamic>> getBranches(
+    String databaseName) async {
+
+  final response = await http.post(
+    Uri.parse('$baseUrl/api/branches'),
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: jsonEncode({
+      'databaseName': databaseName,
+    }),
+  );
+  print("STATUS: ${response.statusCode}");
+print("BODY:");
+print(response.body);
+
+  final data = jsonDecode(response.body);
+
+  return data['data'] ?? [];
+}
+
   static Future<String?> getUserId() =>
       _storage.read(key: "userId");
 
@@ -127,6 +148,564 @@ class ApiService {
     ]);
   }
 
+
+static Future<List<dynamic>> getPendingChallans({
+  required String databaseName,
+  required String branchId,
+}) async {
+
+  final response = await http.post(
+    Uri.parse('$baseUrl/api/pending-challan'),
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: jsonEncode({
+      'databaseName': databaseName,
+      'branchId': branchId,
+    }),
+  );
+
+  final data = jsonDecode(response.body);
+
+  return data['data'] ?? [];
+}
+
+static Future<List<dynamic>> getPendingSRL({
+  required String databaseName,
+  required String branchId,
+}) async {
+
+  final response = await http.post(
+    Uri.parse('$baseUrl/api/pending-srl'),
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: jsonEncode({
+      'databaseName': databaseName,
+      'branchId': branchId,
+    }),
+  );
+
+  final data = jsonDecode(response.body);
+
+  return data['data'] ?? [];
+}
+
+static Future<Map<String, dynamic>>
+approveSRL({
+
+  required String databaseName,
+
+  required String userId,
+
+  required String srlUnq,
+
+}) async {
+
+  final response = await http.post(
+
+    Uri.parse(
+      '$baseUrl/api/srl-approval',
+    ),
+
+    headers: {
+      'Content-Type': 'application/json',
+    },
+
+    body: jsonEncode({
+
+      'databaseName':
+          databaseName,
+
+      'userId':
+          userId,
+
+      'srlUnq':
+          srlUnq,
+    }),
+  );
+
+  return jsonDecode(
+    response.body,
+  );
+}
+
+static Future<Map<String, dynamic>>
+rejectSRL({
+
+  required String databaseName,
+  required String userId,
+  required String srlUnq,
+
+}) async {
+
+  final response = await http.post(
+
+    Uri.parse(
+      '$baseUrl/api/srl-reject',
+    ),
+
+    headers: {
+      'Content-Type': 'application/json',
+    },
+
+    body: jsonEncode({
+
+      'databaseName': databaseName,
+      'userId': userId,
+      'srlUnq': srlUnq,
+    }),
+  );
+
+  return jsonDecode(response.body);
+}
+
+static Future<Map<String, dynamic>>
+approveChallan({
+
+  required String databaseName,
+  required String userId,
+  required String challanUnq,
+
+}) async {
+
+  final response = await http.post(
+
+    Uri.parse(
+      '$baseUrl/api/challan-approval',
+    ),
+
+    headers: {
+      'Content-Type': 'application/json',
+    },
+
+    body: jsonEncode({
+
+      'databaseName':
+          databaseName,
+
+      'userId':
+          userId,
+
+      'challanUnq':
+          challanUnq,
+    }),
+  );
+
+  return jsonDecode(
+    response.body,
+  );
+}
+
+static Future<void> saveDeviceToken({
+  required String userId,
+  required String userName,
+  required String token,
+}) async {
+
+  try {
+
+    await http.post(
+
+      Uri.parse(
+        '$baseUrl/api/save-device-token',
+      ),
+
+      headers: {
+        'Content-Type':
+            'application/json',
+      },
+
+      body: jsonEncode({
+
+        'userId': userId,
+        'userName': userName,
+        'token': token,
+      }),
+    );
+
+  } catch (e) {
+
+    print(
+      "Token Save Error: $e",
+    );
+  }
+}
+
+static Future<List<dynamic>> getCounts({
+  required String databaseName,
+}) async {
+
+  final response = await http.post(
+    Uri.parse("$baseUrl/api/get-count"),
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: jsonEncode({
+      "databaseName": databaseName,
+    }),
+  );
+
+  final json =
+      jsonDecode(response.body);
+
+  return json["data"] ?? [];
+}
+static Future<void>
+sendChatMessage({
+
+  required String databaseName,
+
+  required String referenceId,
+
+  required String fromUser,
+
+  required String toUser,
+
+  required String message,
+
+}) async {
+
+  await http.post(
+
+    Uri.parse(
+      '$baseUrl/api/send-chat',
+    ),
+
+    headers: {
+
+      'Content-Type':
+          'application/json',
+    },
+
+    body: jsonEncode({
+
+      'databaseName':
+          databaseName,
+
+      'referenceId':
+          referenceId,
+
+      'fromUser':
+          fromUser,
+
+      'toUser':
+          toUser,
+
+      'message':
+          message,
+    }),
+  );
+}
+/////chat api
+static Future<List<dynamic>>
+getChatMessages({
+  required String databaseName,
+  required String referenceId,
+}) async {
+  final response = await http.post(
+    Uri.parse('$baseUrl/api/get-chat'),
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: jsonEncode({
+      'databaseName': databaseName,
+      'referenceId': referenceId,
+    }),
+  );
+
+  final data =
+      jsonDecode(response.body);
+
+  return data["data"] ?? [];
+}
+
+
+
+static Future<Map<String, dynamic>>
+getSalesDashboard({
+
+  required String databaseName,
+
+  required String userId,
+
+}) async {
+
+  final response =
+      await http.post(
+
+    Uri.parse(
+      '$baseUrl/api/sales-dashboard',
+    ),
+
+    headers: {
+
+      'Content-Type':
+          'application/json',
+    },
+
+    body: jsonEncode({
+
+      'databaseName':
+          databaseName,
+
+      'userId':
+          userId,
+    }),
+  );
+
+  return jsonDecode(
+    response.body,
+  );
+}
+
+static Future<List<dynamic>>
+getChatUsers({
+
+  required String databaseName,
+
+  required String userId,
+
+}) async {
+
+  final response =
+      await http.post(
+
+    Uri.parse(
+      '$baseUrl/api/chat-users',
+    ),
+
+    headers: {
+      'Content-Type':
+          'application/json',
+    },
+
+    body: jsonEncode({
+
+      'databaseName':
+          databaseName,
+
+      'userId':
+          userId,
+    }),
+  );
+
+  final data =
+      jsonDecode(
+    response.body,
+  );
+
+  return data["data"] ?? [];
+}
+static Future<void> readChat({
+
+  required String databaseName,
+
+  required String currentUser,
+
+  required String targetUser,
+
+}) async {
+
+  await http.post(
+
+    Uri.parse(
+      '$baseUrl/api/read-chat',
+    ),
+
+    headers: {
+      'Content-Type':
+          'application/json',
+    },
+
+    body: jsonEncode({
+
+      'databaseName':
+          databaseName,
+
+      'currentUser':
+          currentUser,
+
+      'targetUser':
+          targetUser,
+    }),
+  );
+}
+
+static Future<List<dynamic>>
+getAllUsers({
+
+  required String databaseName,
+
+}) async {
+
+  final response =
+      await http.post(
+
+    Uri.parse(
+      '$baseUrl/api/all-users',
+    ),
+
+    headers: {
+      'Content-Type':
+          'application/json',
+    },
+
+    body: jsonEncode({
+
+      'databaseName':
+          databaseName,
+    }),
+  );
+
+  final data =
+      jsonDecode(
+    response.body,
+  );
+
+  return data["data"] ?? [];
+}
+
+static Future<List<dynamic>> getCustomerFollowUp({
+  required String databaseName,
+  required String userId,
+}) async {
+  final response = await http.post(
+    Uri.parse("$baseUrl/api/customer-follow-up"),
+    headers: {"Content-Type": "application/json"},
+    body: jsonEncode({
+      "databaseName": databaseName,
+      "userId": userId,
+    }),
+  );
+
+  final data = jsonDecode(response.body);
+
+  if (data["success"] == true) {
+    return data["customers"] ?? [];
+  }
+
+  return [];
+}
+
+static Future<List<dynamic>> getLostCustomers({
+  required String databaseName,
+  required String userId,
+  required String filter,
+  String basis = "QTY",
+  String paymentFilter = "ALL",
+}) async {
+  final response = await http.post(
+    Uri.parse("$baseUrl/api/lost-customers"),
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: jsonEncode({
+      "databaseName": databaseName,
+      "userId": userId,
+     "filter": filter,
+
+      "basis": basis,
+
+      "paymentFilter": paymentFilter,
+    }),
+  );
+
+  return jsonDecode(response.body);
+}
+
+static Future<List<dynamic>> getCategoryTargets({
+  required String databaseName,
+  required String userId,
+}) async {
+
+  final response = await http.post(
+
+    Uri.parse("$baseUrl/api/category-target"),
+
+    headers: {"Content-Type": "application/json"},
+
+    body: jsonEncode({
+
+      "databaseName": databaseName,
+
+      "userId": userId,
+
+    }),
+  );
+
+  return jsonDecode(response.body);
+}
+
+static Future<Map<String, dynamic>> getCustomerHealth({
+  required String databaseName,
+  required String userId,
+}) async {
+
+  final response = await http.post(
+
+    Uri.parse("$baseUrl/api/customer-health"),
+
+    headers: {
+      "Content-Type": "application/json",
+    },
+
+    body: jsonEncode({
+
+      "databaseName": databaseName,
+
+      "userId": userId,
+
+    }),
+  );
+
+  if (response.statusCode == 200) {
+
+    return Map<String, dynamic>.from(
+
+      jsonDecode(response.body),
+
+    );
+  }
+
+  throw Exception("Failed to load customer health");
+}
+
+static Future<List<dynamic>> getCustomerHealthDetails({
+  required String databaseName,
+  required String userId,
+  required String type,
+}) async {
+
+  final response = await http.post(
+
+    Uri.parse("$baseUrl/api/customer-health-details"),
+
+    headers: {
+      "Content-Type": "application/json",
+    },
+
+    body: jsonEncode({
+
+      "databaseName": databaseName,
+
+      "userId": userId,
+
+      "type": type,
+
+    }),
+  );
+
+  if (response.statusCode == 200) {
+
+    return jsonDecode(response.body);
+
+  }
+
+  throw Exception("Failed to load customers");
+}
+
+
   // ───────────────── DEVICE ID ─────────────────
 
   static Future<String> getDeviceId() async {
@@ -140,7 +719,8 @@ class ApiService {
           return storedId;
         }
         // Generate a new unique ID for this browser
-        final newId = "web_${DateTime.now().millisecondsSinceEpoch}_${_randomSuffix()}";
+        final newId =
+    "web_${DateTime.now().millisecondsSinceEpoch}";
         await _storage.write(key: "device_id", value: newId);
         return newId;
       }
@@ -168,132 +748,26 @@ class ApiService {
   }
  // ───────────────── NOTIFICATIONS ─────────────────
 
-  static Future<List<Map<String, dynamic>>>
-  getNotifications() async {
+ static Future<List<dynamic>> getNotifications({
+  required String userId,
+  required String allowedDatabases,
+}) async {
 
-    try {
+  final response = await http.post(
+    Uri.parse('$baseUrl/api/notifications'),
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: jsonEncode({
+      'userId': userId,
+      'allowedDatabases': allowedDatabases,
+    }),
+  );
 
-      final token = await getToken();
+  final data = jsonDecode(response.body);
 
-      if (token == null || token.isEmpty) {
-        return [];
-      }
-
-      final res = await http.get(
-
-        Uri.parse(
-          "$baseUrl/api/notifications",
-        ),
-
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer $token",
-        },
-      );
-
-      print("NOTIFICATION RESPONSE:");
-      print(res.body);
-print("NOTIFICATION STATUS:");
-print(res.statusCode);
-
-print("NOTIFICATION BODY:");
-print(res.body);
-      if (res.statusCode == 200) {
-
-        final body =
-            jsonDecode(res.body);
-
-        if (
-            body["success"] == true &&
-            body["data"] is List
-        ) {
-
-          return List<Map<String, dynamic>>
-              .from(body["data"]);
-        }
-      }
-
-      return [];
-
-    } catch (e) {
-
-      print(
-        "GET NOTIFICATIONS ERROR: $e"
-      );
-
-      return [];
-    }
-  }
-  static String _randomSuffix() {
-    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-    final rand = DateTime.now().microsecondsSinceEpoch;
-    return String.fromCharCodes(
-      List.generate(8, (i) => chars.codeUnitAt((rand >> i) % chars.length)),
-    );
-  }
-
-  // ───────────────── WAKE SERVER ─────────────────
-
-  static Future<void> wakeServer() async {
-    Future(() => ensureAwake());
-  }
-
-  static Future<void> ensureAwake() async {
-    final urls = ["$baseUrl/ping", "$baseUrl/"];
-
-    for (int i = 0; i < 10; i++) {
-      for (final url in urls) {
-        try {
-          final res = await http
-              .get(Uri.parse(url))
-              .timeout(const Duration(seconds: 12));
-
-          final body = res.body.trim();
-
-          if (res.statusCode == 200 &&
-              !body.startsWith('<') &&
-              !body.startsWith('<!')) {
-            if (kIsWeb) {
-              print("✅ Server awake (attempt ${i + 1})");
-            }
-            return;
-          }
-        } catch (_) {}
-      }
-
-      await Future.delayed(const Duration(seconds: 6));
-    }
-  }
-
-  // ───────────────── VALIDATE COMPANY ─────────────────
-
-  static Future<Map<String, dynamic>> validateCompany(
-      String companyCode) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/api/validate-company'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'companyCode': companyCode,
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        return jsonDecode(response.body)
-            as Map<String, dynamic>;
-      }
-
-      return <String, dynamic>{};
-    } catch (e) {
-      print("Validate Company Error: $e");
-      return <String, dynamic>{};
-    }
-  }
-// ───────────────── CHALLAN ─────────────────
-
-  /// Fetches Retail Incentive challans from the stored procedure.
-  /// dateType: 'challan' (default) for Challan Date, 'expected' for Expected Delivery Date
-  /// Returns a list of maps with keys: date or exdate, sp_468, sp_469
+  return data["data"] ?? [];
+}
   static Future<List<Map<String, dynamic>>> getChallanRetailIncentive({String dateType = 'challan'}) async {
     try {
       final token = await getToken();
@@ -379,119 +853,7 @@ print(res.body);
     }
   }
 
-  /// Approves a challan by calling the stored procedure with @what = 'approve'
-  /// Returns success message
-  static Future<Map<String, dynamic>> approveChallan(Map<String, dynamic> challanData) async {
-    try {
-      final token = await getToken();
-      if (token == null || token.isEmpty) {
-        throw Exception("Authentication required. Please login again.");
-      }
-
-      final url = "$baseUrl/api/challan/approve";
-      print("✅ CHALLAN APPROVE: Calling $url");
-      print("📦 CHALLAN APPROVE: Data keys: ${challanData.keys.take(10).toList()}");
-
-      final res = await http.post(
-        Uri.parse(url),
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer $token",
-        },
-        body: jsonEncode(challanData),
-      ).timeout(const Duration(seconds: 30));
-
-      print("📡 CHALLAN APPROVE: Status ${res.statusCode}");
-      print("📦 CHALLAN APPROVE: Response ${res.body}");
-
-      if (res.statusCode == 200) {
-        final body = jsonDecode(res.body) as Map<String, dynamic>;
-        if (body['success'] == true) {
-          print("✅ CHALLAN APPROVE: Success");
-          return body;
-        } else {
-          throw Exception(body['message'] ?? 'Approval failed');
-        }
-      }
-
-      // Handle error responses
-      if (res.statusCode == 400 || res.statusCode == 500) {
-        try {
-          final body = jsonDecode(res.body) as Map<String, dynamic>;
-          final errorMsg = body['message'] ?? body['error'] ?? 'Request failed';
-          throw Exception(errorMsg);
-        } catch (e) {
-          throw Exception("Server error: ${res.body}");
-        }
-      }
-
-      throw Exception("Unexpected response: HTTP ${res.statusCode}");
-    } catch (e) {
-      print("❌ CHALLAN APPROVE ERROR: $e");
-      rethrow;
-    }
-  }
-
-  /// Rejects a challan by calling the stored procedure with @what = 'reject'
-  /// Returns success message
-  static Future<Map<String, dynamic>> rejectChallan(
-    Map<String, dynamic> challanData,
-    String rejectRemark,
-  ) async {
-    try {
-      final token = await getToken();
-      if (token == null || token.isEmpty) {
-        throw Exception("Authentication required. Please login again.");
-      }
-
-      // Add the reject remark to the challan data
-      final dataWithRemark = Map<String, dynamic>.from(challanData);
-      dataWithRemark['sp_581'] = rejectRemark;
-
-      final url = "$baseUrl/api/challan/reject";
-      print("❌ CHALLAN REJECT: Calling $url");
-      print("📦 CHALLAN REJECT: Data keys: ${dataWithRemark.keys.take(10).toList()}");
-
-      final res = await http.post(
-        Uri.parse(url),
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer $token",
-        },
-        body: jsonEncode(dataWithRemark),
-      ).timeout(const Duration(seconds: 30));
-
-      print("📡 CHALLAN REJECT: Status ${res.statusCode}");
-      print("📦 CHALLAN REJECT: Response ${res.body}");
-
-      if (res.statusCode == 200) {
-        final body = jsonDecode(res.body) as Map<String, dynamic>;
-        if (body['success'] == true) {
-          print("✅ CHALLAN REJECT: Success");
-          return body;
-        } else {
-          throw Exception(body['message'] ?? 'Rejection failed');
-        }
-      }
-
-      // Handle error responses
-      if (res.statusCode == 400 || res.statusCode == 500) {
-        try {
-          final body = jsonDecode(res.body) as Map<String, dynamic>;
-          final errorMsg = body['message'] ?? body['error'] ?? 'Request failed';
-          throw Exception(errorMsg);
-        } catch (e) {
-          throw Exception("Server error: ${res.body}");
-        }
-      }
-
-      throw Exception("Unexpected response: HTTP ${res.statusCode}");
-    } catch (e) {
-      print("❌ CHALLAN REJECT ERROR: $e");
-      rethrow;
-    }
-  }
-
+  
   static Future<void> logout(String token) async {
 
   try {
@@ -517,7 +879,7 @@ print(res.body);
     required String password,
   }) async {
     try {
-      await ensureAwake();
+      //await ensureAwake();
 
       // GET DEVICE ID
       final deviceId = await getDeviceId();
@@ -527,7 +889,7 @@ print(res.body);
       }
 
       final res = await http.post(
-        Uri.parse("$baseUrl/api/auth/login"),
+        Uri.parse("$baseUrl/api/login"),
         headers: {
           "Content-Type": "application/json",
         },
@@ -600,82 +962,63 @@ print(res.body);
     }
   }
 
+
   static Future<int>
-getUnreadNotificationCount() async {
+getNotificationCount({
 
-  try {
+  required String userId,
+  required String allowedDatabases,
 
-    final token = await getToken();
+}) async {
 
-    if (token == null || token.isEmpty) {
-      return 0;
-    }
+  final response = await http.post(
 
-    final res = await http.get(
+    Uri.parse(
+      '$baseUrl/api/notification-count',
+    ),
 
-      Uri.parse(
-        "$baseUrl/api/notifications/unread-count",
-      ),
+    headers: {
+      'Content-Type': 'application/json',
+    },
 
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer $token",
-      },
-    );
-print("UNREAD STATUS:");
-print(res.statusCode);
+    body: jsonEncode({
 
-print("UNREAD BODY:");
-print(res.body);
-    if (res.statusCode == 200) {
+      'userId': userId,
 
-      final body =
-          jsonDecode(res.body);
+      'allowedDatabases':
+          allowedDatabases,
+    }),
+  );
 
-      return body["unread_count"] ?? 0;
-    }
+  final data =
+      jsonDecode(response.body);
 
-    return 0;
-
-  } catch (e) {
-
-    print(
-      "UNREAD COUNT ERROR: $e"
-    );
-
-    return 0;
-  }
+  return data["count"] ?? 0;
 }
 
-static Future<void>
-markNotificationAsRead(
-  String id,
-) async {
+static Future<void> markNotificationRead({
+  required int id,
+  required String databaseName,
+}) async {
 
-  try {
+  await http.post(
 
-    final token = await getToken();
+    Uri.parse(
+      '$baseUrl/api/read-notification',
+    ),
 
-    if (token == null) return;
+    headers: {
+      'Content-Type': 'application/json',
+    },
 
-    await http.post(
+    body: jsonEncode({
 
-      Uri.parse(
-        "$baseUrl/api/notifications/read/$id",
-      ),
+      'id': id,
 
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer $token",
-      },
-    );
-
-  } catch (e) {
-
-    print(
-      "MARK READ ERROR: $e"
-    );
-  }
+      'databaseName':
+          databaseName,
+    }),
+  );
 }
 
 static Future<void>
