@@ -614,16 +614,20 @@ static Future<List<dynamic>> getLostCustomers({
   return jsonDecode(response.body);
 }
 
-static Future<List<dynamic>> getCategoryTargets({
+static Future<Map<String, dynamic>> getCategoryTargets({
+
   required String databaseName,
   required String userId,
+
 }) async {
 
   final response = await http.post(
 
     Uri.parse("$baseUrl/api/category-target"),
 
-    headers: {"Content-Type": "application/json"},
+    headers: {
+      "Content-Type": "application/json",
+    },
 
     body: jsonEncode({
 
@@ -632,9 +636,11 @@ static Future<List<dynamic>> getCategoryTargets({
       "userId": userId,
 
     }),
+
   );
 
   return jsonDecode(response.body);
+
 }
 
 static Future<Map<String, dynamic>> getCustomerHealth({
@@ -703,6 +709,87 @@ static Future<List<dynamic>> getCustomerHealthDetails({
   }
 
   throw Exception("Failed to load customers");
+}
+
+static Future<List<dynamic>> getCategoryDecline({
+
+  required String databaseName,
+
+  required String userId,
+
+}) async {
+
+  final response = await http.post(
+
+    Uri.parse("$baseUrl/api/category-decline"),
+
+    headers: {
+
+      "Content-Type": "application/json",
+
+    },
+
+    body: jsonEncode({
+
+      "databaseName": databaseName,
+
+      "userId": userId,
+
+    }),
+
+  );
+
+  if (response.statusCode == 200) {
+
+    return jsonDecode(response.body);
+
+  } else {
+
+    throw Exception("Failed to load category decline");
+
+  }
+}
+
+static Future<List<dynamic>> getCategoryCustomers({
+
+  required String databaseName,
+
+  required String userId,
+
+  required String categoryName,
+
+}) async {
+
+  final response = await http.post(
+
+    Uri.parse("$baseUrl/api/category-customers"),
+
+    headers: {
+
+      "Content-Type": "application/json",
+
+    },
+
+    body: jsonEncode({
+
+      "databaseName": databaseName,
+
+      "userId": userId,
+
+      "categoryName": categoryName,
+
+    }),
+
+  );
+
+  if (response.statusCode == 200) {
+
+    return jsonDecode(response.body);
+
+  }
+
+  throw Exception("Failed to load category customers");
+
 }
 
 

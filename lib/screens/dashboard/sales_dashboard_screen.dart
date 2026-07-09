@@ -12,6 +12,7 @@ import '../dashboard/customer_followup_screen.dart';
 import '../dashboard/lost_customers_screen.dart';
 import '../dashboard/category_target_screen.dart';
 import '../dashboard/customer_health_details_screen.dart';
+import '../dashboard/category_decline_screen.dart';
 
 class SalesDashboardScreen extends StatefulWidget {
   const SalesDashboardScreen({super.key});
@@ -28,6 +29,8 @@ List<dynamic> monthlyTrend = [];
 List<dynamic> topDueCustomers = [];
 List topDueCustomersByDueDays = [];
 List<dynamic> todaySalesList = [];
+List<dynamic> categoryDeclineList = [];
+List<dynamic> categoryTargetList = [];
 double mtdSales = 0;
 double todaySales = 0;
 
@@ -55,6 +58,11 @@ int repeatCustomers = 0;
 int retentionCustomers = 0;
 int lostCustomers = 0;
 
+int criticalCount = 0;
+int needsPushCount = 0;
+int onTrackCount = 0;
+int targetAchievedCount = 0;
+
 
 bool loading = true;
 
@@ -77,6 +85,8 @@ void initState() {
   super.initState();
   loadDashboard();
   loadCustomerHealth();
+  loadCategoryDecline();
+  loadCategoryTarget();
 }
 
 Future<void> loadDashboard() async {
@@ -162,7 +172,8 @@ Future<void> loadDashboard() async {
       lastYTD =double.tryParse(data["LASTYTD"].toString()) ?? 0;
       ytdgrowthPercent =double.tryParse(data["YTDGROWTHPERCENT"].toString(),) ??0;
 
-    todaySalesList = data["TODAYSALESLIST"] ?? [];
+      todaySalesList = data["TODAYSALESLIST"] ?? [];
+      categoryDeclineList = data["CATEGORY_DECLINE"] ?? [];
 
       loading = false;
     });
@@ -199,6 +210,52 @@ Future<void> loadCustomerHealth() async {
         data["ReactivatedCustomers"] ?? 0;
 
     lostCustomers = data["LostCustomers"] ?? 0;
+
+  });
+
+}
+
+Future<void> loadCategoryDecline() async {
+
+  final categoryData  = await ApiService.getCategoryDecline(
+
+    databaseName: AppConfig.databaseName,
+
+    userId: AppConfig.userId,
+
+  );
+
+  setState(() {
+  categoryDeclineList = categoryData;
+
+  });
+
+}
+
+Future<void> loadCategoryTarget() async {
+
+  final data = await ApiService.getCategoryTargets(
+
+    databaseName: AppConfig.databaseName,
+
+    userId: AppConfig.userId,
+
+  );
+
+  setState(() {
+
+    categoryTargetList = data["list"];
+
+    final summary = data["summary"];
+
+    criticalCount = summary["CriticalCount"] ?? 0;
+
+    needsPushCount = summary["NeedsPushCount"] ?? 0;
+
+    onTrackCount = summary["OnTrackCount"] ?? 0;
+
+    targetAchievedCount =
+        summary["TargetAchievedCount"] ?? 0;
 
   });
 
@@ -260,6 +317,11 @@ body: SafeArea(
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: _buildLostCustomersCard(),
+              ),
+
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: _buildCategoryAlertCard(),
               ),
 
               const SizedBox(height: 20),
@@ -400,13 +462,12 @@ if (achievementPercent >= 100) {
 
       borderRadius: BorderRadius.circular(20),
 
-      gradient: LinearGradient(
-
+     gradient: const LinearGradient(
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
   colors: [
-
-    startColor,
-
-    endColor,
+    Color(0xFF243B55),
+    Color(0xFF141E30),
   ],
 ),
     ),
@@ -488,7 +549,7 @@ Container(
   padding: const EdgeInsets.all(12),
 
   decoration: BoxDecoration(
-    color: Colors.white.withOpacity(.12),
+    color: Colors.white.withOpacity(.08),
     borderRadius: BorderRadius.circular(12),
   ),
 
@@ -525,126 +586,50 @@ Container(
 
       const SizedBox(height: 12),
 
-      Row(
-        children: [
-        
+     Row(
 
-      Expanded(
-        child: Column(
-          children: [
+  mainAxisAlignment: MainAxisAlignment.spaceBetween,
 
-            const Text(
-              "Avg (3M)",
-              style: TextStyle(
-                color: Colors.white70,
-                fontSize: 12,
-              ),
-            ),
+  children: [
 
-            const SizedBox(height: 4),
-
-            Text(
-              "${avgLast3MonthsQty.toStringAsFixed(1)}",
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-
-           /*  const Text(
-              "MT",
-              style: TextStyle(
-                color: Colors.white70,
-                fontSize: 11,
-              ),
-            ), */
-          ],
-        ),
+    Expanded(
+      child: _heroCounter(
+        "Critical",
+        criticalCount,
+        Icons.warning_amber_rounded,
+        Colors.redAccent,
       ),
+    ),
 
-      Container(
-        width: 1,
-        height: 45,
-        color: Colors.white24,
+    Expanded(
+      child: _heroCounter(
+        "Push",
+        needsPushCount,
+        Icons.trending_up,
+        Colors.orangeAccent,
       ),
+    ),
 
-      Expanded(
-        child: Column(
-          children: [
-
-            const Text(
-              "MTD Qty",
-              style: TextStyle(
-                color: Colors.white70,
-                fontSize: 12,
-              ),
-            ),
-
-            const SizedBox(height: 4),
-
-            Text(
-              "${currentQty.toStringAsFixed(1)}",
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-
-            /* const Text(
-              "MT",
-              style: TextStyle(
-                color: Colors.white70,
-                fontSize: 11,
-              ),
-            ), */
-          ],
-        ),
+    Expanded(
+      child: _heroCounter(
+        "Track",
+        onTrackCount,
+        Icons.show_chart,
+        Colors.lightBlueAccent,
       ),
+    ),
 
-      Container(
-        width: 1,
-        height: 45,
-        color: Colors.white24,
+    Expanded(
+      child: _heroCounter(
+        "Achieved",
+        targetAchievedCount,
+        Icons.emoji_events,
+        Colors.greenAccent,
       ),
+    ),
 
-      Expanded(
-        child: Column(
-          children: [
-
-            const Text(
-              "Target",
-              style: TextStyle(
-                color: Colors.white70,
-                fontSize: 12,
-              ),
-            ),
-
-            const SizedBox(height: 4),
-
-            Text(
-              "${targetQty.toStringAsFixed(1)}",
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-
-           /*  const Text(
-              "MT",
-              style: TextStyle(
-                color: Colors.white70,
-                fontSize: 11,
-              ),
-            ), */
-          ],
-        ),
-      ),
-   
-        ],
-      ),
+  ],
+),
     ],
   ),
 ),
@@ -662,7 +647,7 @@ Container(
 
             minHeight: 5,
 
-            backgroundColor: Colors.white24,
+            backgroundColor: Colors.white.withOpacity(.15),
 
             valueColor: const AlwaysStoppedAnimation(
               Colors.white,
@@ -1548,113 +1533,127 @@ Widget _buildCustomerHealth() {
     ),
   );
 }
-
 Widget _healthItem({
 
   required IconData icon,
-
   required Color color,
-
   required String title,
-
   required int count,
-
   required String type,
 
 }) {
 
   return InkWell(
 
-    borderRadius: BorderRadius.circular(18),
+    borderRadius: BorderRadius.circular(16),
 
     onTap: () async {
 
-      final customers =
-          await ApiService.getCustomerHealthDetails(
+      showDialog(
+  context: context,
+  barrierDismissible: false,
+  builder: (_) => PopScope(
+    canPop: false,
+    child: Dialog(
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
 
-        databaseName: AppConfig.databaseName,
+            CircularProgressIndicator(),
 
-        userId: AppConfig.userId,
+            SizedBox(height: 20),
 
-        type: type,
-      );
-
-      if (!mounted) return;
-
-      Navigator.push(
-
-        context,
-
-        MaterialPageRoute(
-
-          builder: (_) => CustomerHealthDetailsScreen(
-
-            title: title,
-
-            customers: customers,
-          ),
+            Text(
+              "Loading customers...",
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ),
-      );
-    },
-
-    child: SizedBox(
-
-      width: 78,
-
-      child: Column(
-
-        children: [
-
-          Container(
-  height: 62,
-  width: 62,
-  decoration: BoxDecoration(
-    color: color.withOpacity(.12),
-    borderRadius: BorderRadius.circular(18),
-    border: Border.all(
-      color: color.withOpacity(.25),
+      ),
     ),
   ),
-  child: Icon(
-    icon,
-    color: color,
-    size: 32,
-  ),
-),
+);
+      try {
 
-          const SizedBox(height: 8),
+        final customers =
+            await ApiService.getCustomerHealthDetails(
+          databaseName: AppConfig.databaseName,
+          userId: AppConfig.userId,
+          type: type,
+        );
 
-          Text(
+        Navigator.pop(context);
 
-            title,
-
-            textAlign: TextAlign.center,
-
-            style: const TextStyle(
-
-              fontWeight: FontWeight.w600,
-
-              fontSize: 14,
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => CustomerHealthDetailsScreen(
+              title: title,
+              customers: customers,
             ),
           ),
+        );
 
-          const SizedBox(height: 2),
+      } catch (e) {
 
-          Text(
+        Navigator.pop(context);
 
-            count.toString(),
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString())),
+        );
+      }
+    },
 
-            style: TextStyle(
+    child: Column(
+      children: [
 
-              color: color,
-
-              fontWeight: FontWeight.bold,
-
-              fontSize: 18,
+        Container(
+          height: 62,
+          width: 62,
+          decoration: BoxDecoration(
+            color: color.withOpacity(.12),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: color.withOpacity(.35),
             ),
           ),
-        ],
-      ),
+          child: Icon(
+            icon,
+            color: color,
+            size: 32,
+          ),
+        ),
+
+        const SizedBox(height: 8),
+
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+
+        const SizedBox(height: 2),
+
+        Text(
+          "$count",
+          style: TextStyle(
+            fontSize: 26,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
+      ],
     ),
   );
 }
@@ -1664,6 +1663,350 @@ Widget _divider() {
     height: 90,
     color: Colors.black12,
   );
+}
+
+Widget _buildCategoryAlertCard() {
+  if (categoryDeclineList.isEmpty) return const SizedBox();
+
+  return Container(
+    margin: const EdgeInsets.only(top: 18),
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(20),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(.08),
+          blurRadius: 10,
+          offset: const Offset(0, 4),
+        ),
+      ],
+    ),
+    child: Column(
+      children: [
+
+        Row(
+          children: [
+
+            const Icon(
+              Icons.warning_amber_rounded,
+              color: Colors.red,
+            ),
+
+            const SizedBox(width: 8),
+
+            const Expanded(
+              child: Text(
+                "Categories Needing Attention",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+
+            TextButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                         CategoryDeclineScreen(
+                           categories: categoryDeclineList,
+                        ),
+                  ),
+                );
+              },
+              child: const Text("View All"),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 8),
+
+        ...categoryDeclineList
+            .take(4)
+            .map((e) => _buildCategoryTile(e))
+            .toList(),
+      ],
+    ),
+  );
+}
+
+Widget _buildCategoryTile(dynamic item) {
+
+  final status = item["CategoryStatus"].toString();
+  final double gap =
+      double.tryParse(item["GapToAverage"].toString()) ?? 0;
+
+  Color color;
+  IconData icon;
+  String emoji;
+
+  switch (status) {
+
+    case "No Sale":
+      color = Colors.red;
+      icon = Icons.cancel_rounded;
+      emoji = "🔴";
+      break;
+
+    case "Critical":
+      color = Colors.deepOrange;
+      icon = Icons.error_rounded;
+      emoji = "🟠";
+      break;
+
+    case "Needs Push":
+      color = Colors.orange;
+      icon = Icons.trending_up;
+      emoji = "🟡";
+      break;
+
+    default:
+      color = Colors.green;
+      icon = Icons.check_circle;
+      emoji = "🟢";
+  }
+
+  return Container(
+
+    margin: const EdgeInsets.only(bottom: 12),
+
+    padding: const EdgeInsets.all(14),
+
+    decoration: BoxDecoration(
+
+      color: Colors.white,
+
+      borderRadius: BorderRadius.circular(16),
+
+      boxShadow: [
+
+        BoxShadow(
+          color: Colors.black.withOpacity(.05),
+          blurRadius: 8,
+          offset: const Offset(0, 3),
+        ),
+      ],
+
+      border: Border.all(
+        color: color.withOpacity(.15),
+      ),
+    ),
+
+    child: Column(
+
+      children: [
+
+        Row(
+
+          children: [
+
+            CircleAvatar(
+
+              radius: 20,
+
+              backgroundColor: color.withOpacity(.12),
+
+              child: Icon(
+                icon,
+                color: color,
+                size: 22,
+              ),
+            ),
+
+            const SizedBox(width: 12),
+
+            Expanded(
+
+              child: Text(
+
+                item["CategoryName"],
+
+                maxLines: 1,
+
+                overflow: TextOverflow.ellipsis,
+
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                ),
+              ),
+            ),
+
+            Container(
+
+              padding: const EdgeInsets.symmetric(
+                horizontal: 10,
+                vertical: 5,
+              ),
+
+              decoration: BoxDecoration(
+
+                color: color.withOpacity(.12),
+
+                borderRadius: BorderRadius.circular(20),
+              ),
+
+              child: Text(
+
+                "$emoji  $status",
+
+                style: TextStyle(
+                  color: color,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 11,
+                ),
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 14),
+
+        Container(
+
+          width: double.infinity,
+
+          padding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 10,
+          ),
+
+          decoration: BoxDecoration(
+
+            color: Colors.grey.shade100,
+
+            borderRadius: BorderRadius.circular(12),
+          ),
+
+          child: Row(
+
+            children: [
+
+              const Icon(
+                Icons.trending_up,
+                color: Colors.blue,
+                size: 18,
+              ),
+
+              const SizedBox(width: 8),
+
+              const Text(
+
+                "Potential Business",
+
+                style: TextStyle(
+                  color: Colors.grey,
+                  fontSize: 12,
+                ),
+              ),
+
+              const Spacer(),
+
+              Text(
+
+                "${gap.toStringAsFixed(1)} MT",
+
+                style: TextStyle(
+
+                  color: color,
+
+                  fontWeight: FontWeight.bold,
+
+                  fontSize: 18,
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 10),
+
+        LinearProgressIndicator(
+
+          value: gap > 150
+              ? 1
+              : gap / 150,
+
+          minHeight: 6,
+
+          borderRadius: BorderRadius.circular(10),
+
+          valueColor:
+              AlwaysStoppedAnimation(color),
+
+          backgroundColor: Colors.grey.shade200,
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _heroCounter(
+
+  String title,
+  int count,
+  IconData icon,
+  Color iconColor,
+
+) {
+
+  return Column(
+
+    mainAxisSize: MainAxisSize.min,
+
+    children: [
+
+      Icon(
+        icon,
+        color: iconColor,
+        size: 18,
+      ),
+
+      const SizedBox(height: 3),
+
+      Text(
+
+        "$count",
+
+        style: const TextStyle(
+
+          color: Colors.white,
+
+          fontSize: 20,
+
+          fontWeight: FontWeight.bold,
+
+        ),
+
+      ),
+
+      const SizedBox(height: 2),
+
+      Text(
+
+        title,
+
+        textAlign: TextAlign.center,
+
+        style: const TextStyle(
+
+          color: Colors.white70,
+
+          fontSize: 10,
+
+          fontWeight: FontWeight.w500,
+
+        ),
+
+      ),
+
+    ],
+
+  );
+
 }
 
 
