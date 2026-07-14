@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'category_best_month_customers_screen.dart';
 
 class CategoryDeclineScreen extends StatelessWidget {
   final List<dynamic> categories;
@@ -65,23 +66,54 @@ switch (status) {
           double progress =
               avg == 0 ? 0 : (current / avg).clamp(0.0, 1.0);
 
-          return Card(
+return Card(
+  elevation: 2,
 
-            elevation: 2,
+  margin: const EdgeInsets.only(bottom: 14),
 
-            margin: const EdgeInsets.only(bottom: 14),
+  clipBehavior: Clip.antiAlias,
 
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+  shape: RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(16),
+  ),
+
+  child: InkWell(
+    onTap: () {
+
+      Navigator.push(
+        context,
+
+        MaterialPageRoute(
+          builder: (_) =>
+              CategoryBestMonthCustomersScreen(
+
+            categoryId:
+                item["CategoryId"].toString(),
+
+            categoryName:
+                item["CategoryName"].toString(),
+
+            bestMonth:
+                item["BestMonth"].toString(),
+
+            year: int.parse(
+              item["BestMonthYear"].toString(),
             ),
 
-            child: Padding(
+            month: int.parse(
+              item["BestMonthNumber"].toString(),
+            ),
+          ),
+        ),
+      );
+    },
 
-              padding: const EdgeInsets.all(16),
+    child: Padding(
+      padding: const EdgeInsets.all(16),
 
-              child: Column(
-
-                crossAxisAlignment: CrossAxisAlignment.start,
+      child: Column(
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
 
                 children: [
 
@@ -204,7 +236,8 @@ switch (status) {
                 ],
               ),
             ),
-          );
+           )
+         );
         },
       ),
     );

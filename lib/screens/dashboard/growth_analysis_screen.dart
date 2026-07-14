@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
 import '../../utils/app_config.dart';
+import '../dashboard/product_growth_details_screen.dart';
 
 class GrowthAnalysisScreen extends StatelessWidget {
 final double currentMTD;
@@ -63,20 +64,48 @@ Widget build(BuildContext context) {
             children: [
 
               Expanded(
-                child: _growthCard(
-                  title: "MTD",
-                  growth: mtdgrowthPercent,
-                ),
-              ),
+  child: InkWell(
+    borderRadius: BorderRadius.circular(18),
+    onTap: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const ProductGrowthDetailsScreen(
+            period: "MTD",
+            title: "Previous Month Products",
+          ),
+        ),
+      );
+    },
+    child: _growthCard(
+      title: "MTD",
+      growth: mtdgrowthPercent,
+    ),
+  ),
+),
 
               const SizedBox(width: 12),
 
-              Expanded(
-                child: _growthCard(
-                  title: "YTD",
-                  growth: ytdgrowthPercent,
-                ),
-              ),
+             Expanded(
+  child: InkWell(
+    borderRadius: BorderRadius.circular(18),
+    onTap: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const ProductGrowthDetailsScreen(
+            period: "YTD",
+            title: "Last Financial Year Products",
+          ),
+        ),
+      );
+    },
+    child: _growthCard(
+      title: "YTD",
+      growth: ytdgrowthPercent,
+    ),
+  ),
+),
 
             ],
           ),

@@ -792,6 +792,123 @@ static Future<List<dynamic>> getCategoryCustomers({
 
 }
 
+static Future<List<dynamic>> getCustomerProducts({
+
+  required String databaseName,
+
+  required String userId,
+
+  required String customerId,
+
+}) async {
+
+  final response = await http.post(
+
+    Uri.parse("$baseUrl/api/customer-products"),
+
+    headers: {
+
+      "Content-Type": "application/json",
+
+    },
+
+    body: jsonEncode({
+
+      "databaseName": databaseName,
+
+      "userId": userId,
+
+      "customerId": customerId,
+
+    }),
+
+  );
+
+  if (response.statusCode == 200) {
+
+    return jsonDecode(response.body);
+
+  }
+
+  throw Exception("Failed to load customer products");
+
+}
+
+static Future<List<dynamic>> getProductGrowthDetails({
+
+  required String databaseName,
+
+  required String userId,
+
+  required String period,
+
+}) async {
+
+  final response = await http.post(
+
+    Uri.parse("$baseUrl/api/product-growth-details"),
+
+    headers: {
+      "Content-Type":"application/json",
+    },
+
+    body: jsonEncode({
+
+      "databaseName":databaseName,
+
+      "userId":userId,
+
+      "period":period,
+
+    }),
+
+  );
+
+  return jsonDecode(response.body);
+
+}
+
+static Future<List<dynamic>>
+    getCategoryBestMonthCustomers({
+      required String databaseName,
+
+  required String userId,
+
+  required String categoryId,
+  required int year,
+  required int month,
+}) async {
+
+  final response = await http.post(
+    Uri.parse(
+      "$baseUrl/api/category-best-month-customers",
+    ),
+
+    headers: {
+      "Content-Type": "application/json",
+    },
+
+    body: jsonEncode({
+      "databaseName":databaseName,
+      "userId":userId,
+      "categoryId": categoryId,
+      "year": year,
+      "month": month,
+    }),
+  );
+
+  final data = jsonDecode(response.body);
+
+  if (data["success"] == true) {
+    return data["data"] ?? [];
+  }
+
+  throw Exception(
+    data["message"] ??
+        "Unable to load customer details",
+  );
+}
+
 
   // ───────────────── DEVICE ID ─────────────────
 
