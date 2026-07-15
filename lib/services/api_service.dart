@@ -1,9 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:device_info_plus/device_info_plus.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' ;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
@@ -677,7 +676,7 @@ static Future<Map<String, dynamic>> getCustomerHealth({
   throw Exception("Failed to load customer health");
 }
 
-static Future<List<dynamic>> getCustomerHealthDetails({
+/* static Future<List<dynamic>> getCustomerHealthDetails({
   required String databaseName,
   required String userId,
   required String type,
@@ -709,6 +708,95 @@ static Future<List<dynamic>> getCustomerHealthDetails({
   }
 
   throw Exception("Failed to load customers");
+} */
+static Future<List<dynamic>> getCustomerHealthDetails({
+  required String databaseName,
+  required String userId,
+  required String type,
+}) async {
+
+  final totalWatch = Stopwatch()..start();
+
+  debugPrint("======================================");
+  debugPrint("CUSTOMER HEALTH API START");
+  debugPrint("TYPE: $type");
+  debugPrint("DATABASE: $databaseName");
+  debugPrint("USER: $userId");
+
+  try {
+
+    final response = await http.post(
+      Uri.parse("$baseUrl/api/customer-health-details"),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: jsonEncode({
+        "databaseName": databaseName,
+        "userId": userId,
+        "type": type,
+      }),
+    );
+
+    debugPrint(
+      "HTTP RESPONSE RECEIVED: "
+      "${totalWatch.elapsedMilliseconds} MS",
+    );
+
+    debugPrint(
+      "STATUS CODE: ${response.statusCode}",
+    );
+
+    debugPrint(
+      "RESPONSE SIZE: ${response.body.length}",
+    );
+
+    if (response.statusCode == 200) {
+
+      final decodeWatch = Stopwatch()..start();
+
+      final decoded = jsonDecode(response.body);
+
+      decodeWatch.stop();
+
+      debugPrint(
+        "JSON DECODE TIME: "
+        "${decodeWatch.elapsedMilliseconds} MS",
+      );
+
+      totalWatch.stop();
+
+      debugPrint(
+        "TOTAL API TIME: "
+        "${totalWatch.elapsedMilliseconds} MS",
+      );
+
+      debugPrint(
+        "CUSTOMERS RECEIVED: "
+        "${decoded is List ? decoded.length : 0}",
+      );
+
+      debugPrint("======================================");
+
+      return List<dynamic>.from(decoded);
+    }
+
+    throw Exception(
+      "Failed to load customers: ${response.statusCode}",
+    );
+
+  } catch (e) {
+
+    totalWatch.stop();
+
+    debugPrint(
+      "CUSTOMER HEALTH ERROR AFTER "
+      "${totalWatch.elapsedMilliseconds} MS",
+    );
+
+    debugPrint("ERROR: $e");
+
+    rethrow;
+  }
 }
 
 static Future<List<dynamic>> getCategoryDecline({

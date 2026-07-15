@@ -53,6 +53,10 @@ double ytdgrowthPercent = 0;
 double currentYTD = 0;
 double lastYTD = 0;
 
+double currentQuarter = 0;
+double previousQuarter = 0;
+double quarterGrowthPercent = 0;
+
 int newCustomers = 0;
 int repeatCustomers = 0;
 int retentionCustomers = 0;
@@ -165,12 +169,69 @@ Future<void> loadDashboard() async {
       topDueCustomers = data["TOPDUECUSTOMERS"] ?? [];
       topDueCustomersByDueDays = data["TOPDUECUSTOMERSBYDUEDAYS"] ?? [];
 
-      currentMTD =double.tryParse(data["CURRENTMTD"].toString()) ?? 0;
-      lastMTD =double.tryParse(data["LASTMTD"].toString()) ?? 0;
-      mtdgrowthPercent =double.tryParse(data["MTDGROWTHPERCENT"].toString(),) ??0;
-      currentYTD =double.tryParse(data["CURRENTYTD"].toString()) ?? 0;
-      lastYTD =double.tryParse(data["LASTYTD"].toString()) ?? 0;
-      ytdgrowthPercent =double.tryParse(data["YTDGROWTHPERCENT"].toString(),) ??0;
+  currentMTD =
+    double.tryParse(
+      data["CURRENTMTD"].toString(),
+    ) ??
+    0;
+
+lastMTD =
+    double.tryParse(
+      data["LASTMTD"].toString(),
+    ) ??
+    0;
+
+mtdgrowthPercent =
+    double.tryParse(
+      data["MTDGROWTHPERCENT"].toString(),
+    ) ??
+    0;
+
+
+// ========================================
+// QUARTER
+// ========================================
+
+currentQuarter =
+    double.tryParse(
+      data["CURRENTQTD"].toString(),
+    ) ??
+    0;
+
+previousQuarter =
+    double.tryParse(
+      data["LASTQTD"].toString(),
+    ) ??
+    0;
+
+quarterGrowthPercent =
+    double.tryParse(
+      data["QTDGROWTHPERCENT"].toString(),
+    ) ??
+    0;
+
+
+// ========================================
+// FINANCIAL YEAR
+// ========================================
+
+currentYTD =
+    double.tryParse(
+      data["CURRENTYTD"].toString(),
+    ) ??
+    0;
+
+lastYTD =
+    double.tryParse(
+      data["LASTYTD"].toString(),
+    ) ??
+    0;
+
+ytdgrowthPercent =
+    double.tryParse(
+      data["YTDGROWTHPERCENT"].toString(),
+    ) ??
+    0;
 
       todaySalesList = data["TODAYSALESLIST"] ?? [];
       categoryDeclineList = data["CATEGORY_DECLINE"] ?? [];
@@ -734,6 +795,10 @@ Widget _buildHeroCard() {
          currentMTD: currentMTD,
          lastMTD: lastMTD,
          mtdgrowthPercent: mtdgrowthPercent,
+
+          currentQuarter: currentQuarter,
+          previousQuarter: previousQuarter,
+          quarterGrowthPercent: quarterGrowthPercent,
 
          currentYTD: currentYTD,
          lastYTD: lastYTD,
@@ -1593,71 +1658,128 @@ Widget _healthItem({
 
     borderRadius: BorderRadius.circular(16),
 
-    onTap: () async {
+onTap: () async {
 
-      showDialog(
-  context: context,
-  barrierDismissible: false,
-  builder: (_) => PopScope(
-    canPop: false,
-    child: Dialog(
-      backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: const [
+  final totalWatch = Stopwatch()..start();
 
-            CircularProgressIndicator(),
+  debugPrint("");
+  debugPrint("======================================");
+  debugPrint("HEALTH ITEM CLICKED: $type");
 
-            SizedBox(height: 20),
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (_) => PopScope(
+      canPop: false,
+      child: Dialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: const Padding(
+          padding: EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
 
-            Text(
-              "Loading customers...",
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
+              CircularProgressIndicator(),
+
+              SizedBox(height: 20),
+
+              Text(
+                "Loading customers...",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-            ),
-          ],
+
+            ],
+          ),
         ),
       ),
     ),
-  ),
-);
-      try {
+  );
 
-        final customers =
-            await ApiService.getCustomerHealthDetails(
-          databaseName: AppConfig.databaseName,
-          userId: AppConfig.userId,
-          type: type,
-        );
+  try {
 
-        Navigator.pop(context);
+    debugPrint(
+      "CALLING API AT: "
+      "${totalWatch.elapsedMilliseconds} MS",
+    );
 
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => CustomerHealthDetailsScreen(
-              title: title,
-              customers: customers,
-            ),
-          ),
-        );
+    final customers =
+        await ApiService.getCustomerHealthDetails(
+      databaseName: AppConfig.databaseName,
+      userId: AppConfig.userId,
+      type: type,
+    );
 
-      } catch (e) {
+    debugPrint(
+      "API RETURNED AT: "
+      "${totalWatch.elapsedMilliseconds} MS",
+    );
 
-        Navigator.pop(context);
+    debugPrint(
+      "CUSTOMERS: ${customers.length}",
+    );
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
-        );
-      }
-    },
+    if (!context.mounted) return;
+
+    Navigator.of(
+      context,
+      rootNavigator: true,
+    ).pop();
+
+    debugPrint(
+      "DIALOG CLOSED AT: "
+      "${totalWatch.elapsedMilliseconds} MS",
+    );
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CustomerHealthDetailsScreen(
+          title: title,
+          customers: customers,
+        ),
+      ),
+    );
+
+    totalWatch.stop();
+
+    debugPrint(
+      "NAVIGATION CALLED AT: "
+      "${totalWatch.elapsedMilliseconds} MS",
+    );
+
+    debugPrint("======================================");
+
+  } catch (e) {
+
+    totalWatch.stop();
+
+    debugPrint(
+      "HEALTH CLICK ERROR AFTER: "
+      "${totalWatch.elapsedMilliseconds} MS",
+    );
+
+    debugPrint("ERROR: $e");
+
+    if (!context.mounted) return;
+
+    Navigator.of(
+      context,
+      rootNavigator: true,
+    ).pop();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(e.toString()),
+      ),
+    );
+  }
+},
 
     child: Column(
       children: [
