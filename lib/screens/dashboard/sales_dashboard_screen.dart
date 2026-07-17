@@ -13,6 +13,7 @@ import '../dashboard/lost_customers_screen.dart';
 import '../dashboard/category_target_screen.dart';
 import '../dashboard/customer_health_details_screen.dart';
 import '../dashboard/category_decline_screen.dart';
+import '../enquiry/enquiry_screen.dart';
 
 class SalesDashboardScreen extends StatefulWidget {
   const SalesDashboardScreen({super.key});
@@ -895,51 +896,64 @@ Widget _buildQuickActionsBar() {
         ),
       ),
     ),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
+   child: Row(
+  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+  children: [
 
-        _bottomMenu(
-          icon: Icons.approval_outlined,
-          title: "Approval",
-          selected: true,
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => const BranchSelectionScreen(),
-              ),
-            );
-          },
-        ),
-
-        _bottomMenu(
-          icon: Icons.notifications_none,
-          title: "Alerts",
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => const NotificationScreen(),
-              ),
-            );
-          },
-        ),
-
-        _bottomMenu(
-          icon: Icons.chat_bubble_outline,
-          title: "Chat",
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => const ChatUsersScreen(),
-              ),
-            );
-          },
-        ),
-      ],
+    _bottomMenu(
+      icon: Icons.approval_outlined,
+      title: "Approval",
+      selected: true,
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const BranchSelectionScreen(),
+          ),
+        );
+      },
     ),
+
+    _bottomMenu(
+      icon: Icons.notifications_none,
+      title: "Alerts",
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const NotificationScreen(),
+          ),
+        );
+      },
+    ),
+
+    _bottomMenu(
+      icon: Icons.support_agent_outlined,
+      title: "Enquiry",
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const EnquiryScreen(),
+          ),
+        );
+      },
+    ),
+
+    _bottomMenu(
+      icon: Icons.chat_bubble_outline,
+      title: "Chat",
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const ChatUsersScreen(),
+          ),
+        );
+      },
+    ),
+  ],
+),
   );
 }
 

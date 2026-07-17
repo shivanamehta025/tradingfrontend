@@ -997,6 +997,31 @@ static Future<List<dynamic>>
   );
 }
 
+static Future<List<dynamic>> getTopGrowingProducts({
+  required String databaseName,
+  required String userId,
+}) async {
+
+  final response = await http.post(
+
+    Uri.parse("$baseUrl/api/top-growing-products"),
+
+    headers: {"Content-Type": "application/json"},
+
+    body: jsonEncode({
+
+      "databaseName": databaseName,
+
+      "userId": userId,
+
+    }),
+
+  );
+
+  return jsonDecode(response.body);
+
+}
+
 
   // ───────────────── DEVICE ID ─────────────────
 
