@@ -63,10 +63,13 @@ class _LoginScreenState extends State<LoginScreen> {
       AppConfig.userId =
       result['user']['sm63_5']
           ?.toString() ?? '';
-print(
-      "userid: ${AppConfig.userId}");
-      print(
-      "username: ${AppConfig.userName}");
+
+              AppConfig.designation =
+      result['user']['sm61_6']
+          ?.toString() ?? '';
+      print("userid: ${AppConfig.userId}");
+      print("username: ${AppConfig.userName}");
+      print("designation: ${AppConfig.designation}");
 
       final token =
     await FirebaseMessaging.instance
@@ -82,6 +85,7 @@ print("SAVE TOKEN TOKEN = $token");
     userId:AppConfig.userId,
     userName: AppConfig.userName,
     token: token,
+    designation:AppConfig.designation,
   );
 }
 
@@ -109,6 +113,11 @@ print("SAVE TOKEN TOKEN = $token");
   await prefs.setString(
     "allowedDatabases",
     AppConfig.allowedDatabases,
+  );
+
+   await prefs.setString(
+    "designation",
+    AppConfig.designation,
   );
 
         Navigator.pushReplacement(

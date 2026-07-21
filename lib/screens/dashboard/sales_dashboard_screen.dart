@@ -88,6 +88,12 @@ String formatAmount(double value) {
 @override
 void initState() {
   super.initState();
+   if (AppConfig.designation.toUpperCase() == "ADMINISTRATOR") {
+    setState(() {
+      loading = false;
+    });
+    return;
+  }
   loadDashboard();
   loadCustomerHealth();
   loadCategoryDecline();
@@ -242,8 +248,6 @@ ytdgrowthPercent =
   }
   catch (e) {
 
-    debugPrint(e.toString());
-
     setState(() {
       loading = false;
     });
@@ -336,130 +340,117 @@ Widget build(BuildContext context) {
       ),
     );
   }
+  
 
   return Scaffold(
 
     backgroundColor:
         const Color(0xFFF8FAFC),
 
-body: SafeArea(
-  child: Column(
-    children: [
-      Expanded(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.only(bottom: 20),
-          child: Column(
-            children: [
+body: AppConfig.designation.toUpperCase() == "ADMINISTRATOR"
 
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  16,
-                  8, // increased top padding since header is removed
-                  16,
-                  12,
+    ? SafeArea(
+        child: Column(
+          children: [
+
+            Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const [
+
+                    Icon(
+                      Icons.admin_panel_settings,
+                      size: 90,
+                      color: Colors.blue,
+                    ),
+
+                    SizedBox(height: 20),
+
+                    Text(
+                      "Administrator Dashboard",
+                      style: TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+
+                    SizedBox(height: 8),
+
+                    Text(
+                      "Company Dashboard Coming Soon",
+                      style: TextStyle(
+                        color: Colors.grey,
+                        fontSize: 16,
+                      ),
+                    ),
+
+                  ],
                 ),
-                child: _buildHeroCard(),
               ),
+            ),
 
-               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: _buildStatsGrid(),
+            _buildQuickActionsBar(),
+
+          ],
+        ),
+      )
+
+    : SafeArea(
+        child: Column(
+          children: [
+
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.only(bottom: 20),
+                child: Column(
+                  children: [
+
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                      child: _buildHeroCard(),
+                    ),
+
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: _buildStatsGrid(),
+                    ),
+
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: _buildCustomerHealth(),
+                    ),
+
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: _buildSalesTrend(),
+                    ),
+
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: _buildLostCustomersCard(),
+                    ),
+
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: _buildCategoryAlertCard(),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                  ],
+                ),
               ),
+            ),
 
-               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: _buildCustomerHealth(),
-              ),
+            _buildQuickActionsBar(),
 
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: _buildSalesTrend(),
-              ),
-
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: _buildLostCustomersCard(),
-              ),
-
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: _buildCategoryAlertCard(),
-              ),
-
-              const SizedBox(height: 20),
-            ],
-          ),
+          ],
         ),
       ),
-
-      _buildQuickActionsBar(),
-    ],
-  ),
-),
   );
 }
 
-/* Widget _buildHeader() {
-
-  return Padding(
-
-    padding: const EdgeInsets.fromLTRB(16,10,16,8),
-
-    child: Row(
-
-      children: [
-
-        const CircleAvatar(
-
-          radius: 22,
-
-          child: Icon(Icons.person),
-
-        ),
-
-        const SizedBox(width:12),
-
-        Expanded(
-
-          child: Column(
-
-            crossAxisAlignment:
-                CrossAxisAlignment.start,
-
-            children: [
-
-              Text(
-
-                AppConfig.userName,
-
-                style: const TextStyle(
-
-                  fontWeight: FontWeight.bold,
-
-                  fontSize:18,
-                ),
-              ),
-
-              Text(
-
-                AppConfig.selectedCompany,
-
-                style: TextStyle(
-
-                  color: Colors.grey.shade600,
-
-                  fontSize:13,
-                ),
-              ),
-            ],
-          ),
-        ),
-
-       
-      ],
-    ),
-  );
-} */
 
 Widget _buildHeroCard() {
   String status;
@@ -899,7 +890,7 @@ Widget _buildQuickActionsBar() {
    child: Row(
   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
   children: [
-
+    if (AppConfig.canApprove)
     _bottomMenu(
       icon: Icons.approval_outlined,
       title: "Approval",
@@ -1674,12 +1665,7 @@ Widget _healthItem({
 
 onTap: () async {
 
-  final totalWatch = Stopwatch()..start();
-
-  debugPrint("");
-  debugPrint("======================================");
-  debugPrint("HEALTH ITEM CLICKED: $type");
-
+ 
   showDialog(
     context: context,
     barrierDismissible: false,
@@ -1717,11 +1703,6 @@ onTap: () async {
 
   try {
 
-    debugPrint(
-      "CALLING API AT: "
-      "${totalWatch.elapsedMilliseconds} MS",
-    );
-
     final customers =
         await ApiService.getCustomerHealthDetails(
       databaseName: AppConfig.databaseName,
@@ -1729,14 +1710,7 @@ onTap: () async {
       type: type,
     );
 
-    debugPrint(
-      "API RETURNED AT: "
-      "${totalWatch.elapsedMilliseconds} MS",
-    );
-
-    debugPrint(
-      "CUSTOMERS: ${customers.length}",
-    );
+   
 
     if (!context.mounted) return;
 
@@ -1745,11 +1719,7 @@ onTap: () async {
       rootNavigator: true,
     ).pop();
 
-    debugPrint(
-      "DIALOG CLOSED AT: "
-      "${totalWatch.elapsedMilliseconds} MS",
-    );
-
+   
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -1760,25 +1730,7 @@ onTap: () async {
       ),
     );
 
-    totalWatch.stop();
-
-    debugPrint(
-      "NAVIGATION CALLED AT: "
-      "${totalWatch.elapsedMilliseconds} MS",
-    );
-
-    debugPrint("======================================");
-
   } catch (e) {
-
-    totalWatch.stop();
-
-    debugPrint(
-      "HEALTH CLICK ERROR AFTER: "
-      "${totalWatch.elapsedMilliseconds} MS",
-    );
-
-    debugPrint("ERROR: $e");
 
     if (!context.mounted) return;
 

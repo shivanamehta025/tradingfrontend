@@ -2,20 +2,21 @@ import 'package:flutter/material.dart';
 
 import '../../services/api_service.dart';
 import '../../utils/app_config.dart';
+import 'customer_product_insight_screen.dart';
 
 class CategoryBestMonthCustomersScreen
     extends StatefulWidget {
 
-  final String categoryId;
-  final String categoryName;
+  final String productId;
+  final String productName;
   final String bestMonth;
   final int year;
   final int month;
 
   const CategoryBestMonthCustomersScreen({
     super.key,
-    required this.categoryId,
-    required this.categoryName,
+    required this.productId,
+    required this.productName,
     required this.bestMonth,
     required this.year,
     required this.month,
@@ -53,7 +54,7 @@ class _CategoryBestMonthCustomersScreenState
                   userId: AppConfig.userId,
 
 
-        categoryId: widget.categoryId,
+        productId: widget.productId,
 
         year: widget.year,
 
@@ -106,294 +107,155 @@ class _CategoryBestMonthCustomersScreenState
     return "₹ ${value.toStringAsFixed(0)}";
   }
 
-  @override
-  Widget build(BuildContext context) {
+@override
+Widget build(BuildContext context) {
 
-    final totalQty = customers.fold<double>(
-      0,
-      (sum, item) =>
-          sum + _number(item["Qty"]),
-    );
+  final totalQty = customers.fold<double>(
+    0,
+    (sum, item) => sum + _number(item["Qty"]),
+  );
 
-    final totalAmount = customers.fold<double>(
-      0,
-      (sum, item) =>
-          sum + _number(item["Amount"]),
-    );
+  final totalAmount = customers.fold<double>(
+    0,
+    (sum, item) => sum + _number(item["Amount"]),
+  );
 
-    return Scaffold(
+  return Scaffold(
+    appBar: AppBar(
+      title: Text(widget.productName),
+    ),
 
-      backgroundColor:
-          const Color(0xffF5F6FA),
+    body: ListView.builder(
+      itemCount: customers.length,
 
-      appBar: AppBar(
+      itemBuilder: (context, index) {
 
-        title: Text(widget.categoryName),
+        final customer = customers[index];
+        final qty = _number(customer["Qty"]);
+        final amount = _number(customer["Amount"]);
 
-        backgroundColor: Colors.orange,
+        return InkWell(
+          onTap: () {
 
-        foregroundColor: Colors.white,
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => CustomerProductInsightScreen(
+                  customerId: customer["CustomerId"].toString(),
+                  productId: widget.productId,
+                  productName: widget.productName,
+                  bestMonthYear: widget.year,
+                  bestMonthNo: widget.month,
+                ),
+              ),
+            );
+
+          },
+  child: Card(
+
+    elevation: 1,
+
+    margin: const EdgeInsets.only(bottom: 10),
+
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(14),
+    ),
+
+    child: Padding(
+
+      padding: const EdgeInsets.all(14),
+
+      child: Row(
+
+        children: [
+
+          CircleAvatar(
+            radius: 20,
+            backgroundColor: Colors.orange.shade50,
+            child: Text(
+              "${index + 1}",
+              style: TextStyle(
+                color: Colors.orange.shade800,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+
+          const SizedBox(width: 12),
+
+          Expanded(
+
+            child: Column(
+
+              crossAxisAlignment: CrossAxisAlignment.start,
+
+              children: [
+
+                Text(
+                  customer["CustomerName"].toString(),
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+
+                const SizedBox(height: 5),
+
+                Text(
+                  "${qty.toStringAsFixed(2)} MT",
+                  style: const TextStyle(
+                    color: Colors.grey,
+                    fontSize: 12,
+                  ),
+                ),
+
+              ],
+
+            ),
+
+          ),
+
+          Column(
+
+            crossAxisAlignment: CrossAxisAlignment.end,
+
+            children: [
+
+              Text(
+                _formatAmount(amount),
+                style: const TextStyle(
+                  color: Colors.green,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+
+              const SizedBox(height: 6),
+
+              const Icon(
+                Icons.arrow_forward_ios,
+                size: 16,
+                color: Colors.grey,
+              ),
+
+            ],
+
+          ),
+
+        ],
+
       ),
 
-      body: isLoading
-
-          ? const Center(
-              child:
-                  CircularProgressIndicator(),
-            )
-
-          : customers.isEmpty
-
-              ? const Center(
-                  child: Text(
-                    "No customers found",
-                  ),
-                )
-
-              : Column(
-
-                  children: [
-
-                    /// SUMMARY
-                    Container(
-
-                      width: double.infinity,
-
-                      margin:
-                          const EdgeInsets.all(16),
-
-                      padding:
-                          const EdgeInsets.all(16),
-
-                      decoration: BoxDecoration(
-
-                        color: Colors.white,
-
-                        borderRadius:
-                            BorderRadius.circular(16),
-
-                        boxShadow: const [
-
-                          BoxShadow(
-                            color: Colors.black12,
-                            blurRadius: 8,
-                          ),
-                        ],
-                      ),
-
-                      child: Column(
-
-                        children: [
-
-                          Text(
-
-                            "Best Month · ${widget.bestMonth}",
-
-                            style: const TextStyle(
-                              color: Colors.grey,
-                              fontSize: 13,
-                            ),
-                          ),
-
-                          const SizedBox(height: 12),
-
-                          Row(
-
-                            children: [
-
-                              Expanded(
-                                child: _summaryValue(
-                                  "Customers",
-                                  customers.length
-                                      .toString(),
-                                ),
-                              ),
-
-                              Expanded(
-                                child: _summaryValue(
-                                  "Quantity",
-                                  "${totalQty.toStringAsFixed(2)} MT",
-                                ),
-                              ),
-
-                              Expanded(
-                                child: _summaryValue(
-                                  "Sales",
-                                  _formatAmount(
-                                    totalAmount,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    /// CUSTOMER LIST
-                    Expanded(
-
-                      child: ListView.builder(
-
-                        padding:
-                            const EdgeInsets.fromLTRB(
-                          16,
-                          0,
-                          16,
-                          16,
-                        ),
-
-                        itemCount:
-                            customers.length,
-
-                        itemBuilder:
-                            (context, index) {
-
-                          final customer =
-                              customers[index];
-
-                          final qty = _number(
-                            customer["Qty"],
-                          );
-
-                          final amount = _number(
-                            customer["Amount"],
-                          );
-
-                          return Card(
-
-                            elevation: 1,
-
-                            margin:
-                                const EdgeInsets.only(
-                              bottom: 10,
-                            ),
-
-                            shape:
-                                RoundedRectangleBorder(
-
-                              borderRadius:
-                                  BorderRadius.circular(
-                                14,
-                              ),
-                            ),
-
-                            child: Padding(
-
-                              padding:
-                                  const EdgeInsets.all(
-                                14,
-                              ),
-
-                              child: Row(
-
-                                children: [
-
-                                  CircleAvatar(
-
-                                    radius: 20,
-
-                                    backgroundColor:
-                                        Colors.orange
-                                            .shade50,
-
-                                    child: Text(
-
-                                      "${index + 1}",
-
-                                      style: TextStyle(
-
-                                        color: Colors
-                                            .orange
-                                            .shade800,
-
-                                        fontWeight:
-                                            FontWeight
-                                                .bold,
-                                      ),
-                                    ),
-                                  ),
-
-                                  const SizedBox(
-                                    width: 12,
-                                  ),
-
-                                  Expanded(
-
-                                    child: Column(
-
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment
-                                              .start,
-
-                                      children: [
-
-                                        Text(
-
-                                          customer[
-                                                  "CustomerName"]
-                                              .toString(),
-
-                                          style:
-                                              const TextStyle(
-
-                                            fontSize: 15,
-
-                                            fontWeight:
-                                                FontWeight
-                                                    .w600,
-                                          ),
-                                        ),
-
-                                        const SizedBox(
-                                          height: 5,
-                                        ),
-
-                                        Text(
-
-                                          "${qty.toStringAsFixed(2)} MT",
-
-                                          style:
-                                              const TextStyle(
-
-                                            color:
-                                                Colors.grey,
-
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-
-                                  Text(
-
-                                    _formatAmount(
-                                      amount,
-                                    ),
-
-                                    style:
-                                        const TextStyle(
-
-                                      color: Colors.green,
-
-                                      fontSize: 14,
-
-                                      fontWeight:
-                                          FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-    );
-  }
+    ),
+
+  ),
+
+);
+      },
+    ),
+  );
+}
+  
 
   Widget _summaryValue(
     String title,

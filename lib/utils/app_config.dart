@@ -14,4 +14,12 @@ class AppConfig {
   static String userId = '';
 
   static String userName = '';
+
+  static String designation = "";
+
+    static bool get isAdministrator =>
+      designation.trim().toUpperCase() == "ADMINISTRATOR";
+
+  static bool get canApprove =>
+      isAdministrator;
 }

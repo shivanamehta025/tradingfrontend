@@ -300,6 +300,7 @@ static Future<void> saveDeviceToken({
   required String userId,
   required String userName,
   required String token,
+  required String designation,
 }) async {
 
   try {
@@ -320,6 +321,7 @@ static Future<void> saveDeviceToken({
         'userId': userId,
         'userName': userName,
         'token': token,
+        'designation':designation,
       }),
     );
 
@@ -676,7 +678,7 @@ static Future<Map<String, dynamic>> getCustomerHealth({
   throw Exception("Failed to load customer health");
 }
 
-/* static Future<List<dynamic>> getCustomerHealthDetails({
+ static Future<List<dynamic>> getCustomerHealthDetails({
   required String databaseName,
   required String userId,
   required String type,
@@ -708,23 +710,15 @@ static Future<Map<String, dynamic>> getCustomerHealth({
   }
 
   throw Exception("Failed to load customers");
-} */
-static Future<List<dynamic>> getCustomerHealthDetails({
+} 
+
+/* static Future<List<dynamic>> getCustomerHealthDetails({
   required String databaseName,
   required String userId,
   required String type,
 }) async {
 
-  final totalWatch = Stopwatch()..start();
-
-  debugPrint("======================================");
-  debugPrint("CUSTOMER HEALTH API START");
-  debugPrint("TYPE: $type");
-  debugPrint("DATABASE: $databaseName");
-  debugPrint("USER: $userId");
-
-  try {
-
+ 
     final response = await http.post(
       Uri.parse("$baseUrl/api/customer-health-details"),
       headers: {
@@ -737,72 +731,20 @@ static Future<List<dynamic>> getCustomerHealthDetails({
       }),
     );
 
-    debugPrint(
-      "HTTP RESPONSE RECEIVED: "
-      "${totalWatch.elapsedMilliseconds} MS",
-    );
-
-    debugPrint(
-      "STATUS CODE: ${response.statusCode}",
-    );
-
-    debugPrint(
-      "RESPONSE SIZE: ${response.body.length}",
-    );
 
     if (response.statusCode == 200) {
 
-      final decodeWatch = Stopwatch()..start();
+    return jsonDecode(response.body);
 
-      final decoded = jsonDecode(response.body);
+  } else {
 
-      decodeWatch.stop();
+    throw Exception("Failed to load category decline");
 
-      debugPrint(
-        "JSON DECODE TIME: "
-        "${decodeWatch.elapsedMilliseconds} MS",
-      );
-
-      totalWatch.stop();
-
-      debugPrint(
-        "TOTAL API TIME: "
-        "${totalWatch.elapsedMilliseconds} MS",
-      );
-
-      debugPrint(
-        "CUSTOMERS RECEIVED: "
-        "${decoded is List ? decoded.length : 0}",
-      );
-
-      debugPrint("======================================");
-
-      return List<dynamic>.from(decoded);
-    }
-
-    throw Exception(
-      "Failed to load customers: ${response.statusCode}",
-    );
-
-  } catch (e) {
-
-    totalWatch.stop();
-
-    debugPrint(
-      "CUSTOMER HEALTH ERROR AFTER "
-      "${totalWatch.elapsedMilliseconds} MS",
-    );
-
-    debugPrint("ERROR: $e");
-
-    rethrow;
   }
-}
+} */
 
 static Future<List<dynamic>> getCategoryDecline({
-
   required String databaseName,
-
   required String userId,
 
 }) async {
@@ -962,7 +904,7 @@ static Future<List<dynamic>>
 
   required String userId,
 
-  required String categoryId,
+  required String productId,
   required int year,
   required int month,
 }) async {
@@ -979,7 +921,7 @@ static Future<List<dynamic>>
     body: jsonEncode({
       "databaseName":databaseName,
       "userId":userId,
-      "categoryId": categoryId,
+      "productId": productId,
       "year": year,
       "month": month,
     }),
@@ -1020,6 +962,110 @@ static Future<List<dynamic>> getTopGrowingProducts({
 
   return jsonDecode(response.body);
 
+}
+
+static Future<List<dynamic>> getTopGrowingCustomers({
+  required String databaseName,
+  required String userId,
+}) async {
+
+  final response = await http.post(
+
+    Uri.parse("$baseUrl/api/top-growing-customers"),
+
+    headers: {"Content-Type": "application/json"},
+
+    body: jsonEncode({
+
+      "databaseName": databaseName,
+
+      "userId": userId,
+
+    }),
+
+  );
+
+  return jsonDecode(response.body);
+}
+
+static Future<List<dynamic>> getTopGrowingCustomerProducts({
+  required String databaseName,
+  required String userId,
+  required String customerId,
+}) async {
+  final response = await http.post(
+    Uri.parse("$baseUrl/api/top-growing-customer-products"),
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: jsonEncode({
+      "databaseName": databaseName,
+      "userId": userId,
+      "customerId": customerId,
+    }),
+  );
+
+  if (response.statusCode == 200) {
+    return jsonDecode(response.body);
+  } else {
+    throw Exception("Failed to load customer products");
+  }
+}
+
+static Future<List<dynamic>> getProductCustomerInsight({
+  required String databaseName,
+  required String userId,
+  required String customerId,
+  required String productId,
+  required int bestMonthYear,
+  required int bestMonthNo,
+}) async {
+  final response = await http.post(
+    Uri.parse('$baseUrl/api/product-customer-insight'),
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: jsonEncode({
+      "databaseName": databaseName,
+      "userId": userId,
+      "customerId": customerId,
+      "productId": productId,
+      "bestMonthYear": bestMonthYear,
+      "bestMonthNo": bestMonthNo,
+    }),
+  );
+
+  if (response.statusCode == 200) {
+    return jsonDecode(response.body);
+  } else {
+    throw Exception("Failed to load customer insight");
+  }
+}
+
+static Future<List<dynamic>> getCustomerProductTrend({
+  required String databaseName,
+  required String userId,
+  required String customerId,
+  required String productId,
+}) async {
+  final response = await http.post(
+    Uri.parse('$baseUrl/api/customer-product-trend'),
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: jsonEncode({
+      "databaseName": databaseName,
+      "userId": userId,
+      "customerId": customerId,
+      "productId": productId,
+    }),
+  );
+
+  if (response.statusCode == 200) {
+    return jsonDecode(response.body);
+  } else {
+    throw Exception("Failed to load monthly trend");
+  }
 }
 
 

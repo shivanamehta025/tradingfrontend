@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../dashboard/product_growth_details_screen.dart';
 import '../dashboard/top_growing_products_screen.dart';
+import '../dashboard/top_growing_customers_screen.dart';
 
 class GrowthAnalysisScreen extends StatelessWidget {
   final double currentMTD;
@@ -217,8 +218,10 @@ class GrowthAnalysisScreen extends StatelessWidget {
               difference: ytdDiff,
             ),
             const SizedBox(height: 18),
-
             _buildTopGrowingProductsCard(context),
+
+            const SizedBox(height: 16),
+            _buildTopGrowingCustomersCard(context),
 
           ],
         ),
@@ -323,6 +326,116 @@ class GrowthAnalysisScreen extends StatelessWidget {
                 Icon(
                   Icons.arrow_forward_ios,
                   color: Colors.green,
+                  size: 12,
+                ),
+
+              ],
+            ),
+          ),
+
+        ],
+      ),
+    ),
+  );
+}
+
+Widget _buildTopGrowingCustomersCard(BuildContext context) {
+  return InkWell(
+    borderRadius: BorderRadius.circular(18),
+    onTap: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const TopGrowingCustomersScreen(),
+        ),
+      );
+    },
+    child: Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(.08),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: Colors.blue.shade50,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: const Icon(
+              Icons.people_alt_rounded,
+              color: Colors.blue,
+              size: 30,
+            ),
+          ),
+
+          const SizedBox(width: 15),
+
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+
+                Text(
+                  "Top Growing Customers",
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+
+                SizedBox(height: 4),
+
+                Text(
+                  "Customers with highest purchase growth\ncompared with previous financial year.",
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey,
+                    height: 1.3,
+                  ),
+                ),
+
+              ],
+            ),
+          ),
+
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 10,
+              vertical: 6,
+            ),
+            decoration: BoxDecoration(
+              color: Colors.blue.shade50,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Row(
+              children: [
+
+                Text(
+                  "View",
+                  style: TextStyle(
+                    color: Colors.blue,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
+
+                SizedBox(width: 4),
+
+                Icon(
+                  Icons.arrow_forward_ios,
+                  color: Colors.blue,
                   size: 12,
                 ),
 

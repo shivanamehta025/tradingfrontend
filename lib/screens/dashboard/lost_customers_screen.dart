@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-
 import '../../services/api_service.dart';
 import '../../utils/app_config.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class LostCustomersScreen extends StatefulWidget {
   final List<dynamic> customers;
@@ -34,6 +35,48 @@ class _LostCustomersScreenState
     super.initState();
     customers = widget.customers;
   }
+
+  Future<void> openWhatsApp(
+  String mobile,
+  String customerName,
+
+) async {
+
+  if (mobile.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Customer mobile number not available"),
+      ),
+    );
+    return;
+  }
+
+  final message = '''
+
+Hello $customerName,
+
+We noticed that it has been some time since your last purchase.
+
+We would love to serve you again.
+
+Please let us know if you have any requirement.
+
+Regards,
+Guljag Industries Limited
+
+''';
+
+  final url = Uri.parse(
+    "https://wa.me/91$mobile?text=${Uri.encodeComponent(message)}",
+  );
+
+  if (await canLaunchUrl(url)) {
+    await launchUrl(
+      url,
+      mode: LaunchMode.externalApplication,
+    );
+  }
+}
 
 Future<void> loadCustomers(String filter) async {
 
@@ -487,6 +530,65 @@ Row(
   ),
 ),
   ],
+),
+
+const SizedBox(height: 18),
+
+Row(
+
+  children: [
+
+    Expanded(
+
+      child: OutlinedButton.icon(
+
+        icon: const Icon(Icons.call),
+
+        label: const Text("Call"),
+
+        onPressed: () {
+
+          final mobile = item["MobileNo"]?.toString() ?? "";
+
+          if (mobile.isNotEmpty) {
+
+            launchUrl(
+              Uri.parse("tel:$mobile"),
+            );
+
+          }
+
+        },
+
+      ),
+
+    ),
+
+    const SizedBox(width: 10),
+
+    Expanded(
+  child: ElevatedButton.icon(
+    style: ElevatedButton.styleFrom(
+      backgroundColor: const Color(0xFF25D366), // WhatsApp green
+      foregroundColor: Colors.white,
+    ),
+    icon: const FaIcon(
+      FontAwesomeIcons.whatsapp,
+      size: 18,
+    ),
+    label: const Text("WhatsApp"),
+    onPressed: () {
+      openWhatsApp(
+        item["MobileNo"]?.toString() ?? "",
+        item["CustomerName"],
+       
+      );
+    },
+  ),
+),
+
+  ],
+
 ),
                                 ],
                               ),

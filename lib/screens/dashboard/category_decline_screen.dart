@@ -15,7 +15,7 @@ class CategoryDeclineScreen extends StatelessWidget {
       backgroundColor: const Color(0xffF5F6FA),
 
       appBar: AppBar(
-        title: const Text("Category Performance"),
+        title: const Text("Product Performance"),
         backgroundColor: Colors.red,
         foregroundColor: Colors.white,
       ),
@@ -26,7 +26,7 @@ class CategoryDeclineScreen extends StatelessWidget {
         itemBuilder: (context, index) {
 
           final item = categories[index];
-final status = item["CategoryStatus"];
+final status = item["ProductStatus"];
 
 Color color;
 Color bgColor;
@@ -87,11 +87,11 @@ return Card(
           builder: (_) =>
               CategoryBestMonthCustomersScreen(
 
-            categoryId:
-                item["CategoryId"].toString(),
+            productId:
+                item["ProductId"].toString(),
 
-            categoryName:
-                item["CategoryName"].toString(),
+            productName:
+                item["ProductName"].toString(),
 
             bestMonth:
                 item["BestMonth"].toString(),
@@ -137,7 +137,7 @@ return Card(
 
                         child: Text(
 
-                          item["CategoryName"],
+                          item["ProductName"],
 
                           style: const TextStyle(
                             fontSize: 17,
