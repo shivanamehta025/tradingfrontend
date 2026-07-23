@@ -29,6 +29,7 @@ class _CustomerProductInsightScreenState
   bool loading = true;
 
   Map<String, dynamic>? data;
+  List<dynamic> productList = [];
 
   @override
   void initState() {
@@ -46,14 +47,20 @@ class _CustomerProductInsightScreenState
         bestMonthYear: widget.bestMonthYear,
         bestMonthNo: widget.bestMonthNo,
       );
+    print(result);
 
-      setState(() {
-        data = result.first;
-        loading = false;
+setState(() {
+  data = result[0][0];
+  productList = result[1];
+  loading = false;
       });
-    } catch (e) {
-      loading = false;
-      setState(() {});
+    } catch (e, stackTrace) {
+  print("========== ERROR ==========");
+  print(e);
+  print(stackTrace);
+
+  loading = false;
+  setState(() {});
     }
   }
 
@@ -234,6 +241,33 @@ class _CustomerProductInsightScreenState
               ],
             ),
 
+              const SizedBox(height: 12),
+
+            Row(
+              children: [
+
+                Expanded(
+                  child: _buildKpiCard(
+                   Icons.bar_chart,
+                    "Last Year Avg Monthly Qty",
+                    "${data!["LastFYMonthlyAverageQty"]} MT",
+                    Colors.red,
+                  ),
+                ),
+
+                const SizedBox(width: 12),
+
+                Expanded(
+                  child: _buildKpiCard(
+                     Icons.percent,
+                    "Achievement",
+                    "${data!["AchievementPercent"]}",
+                    Colors.green,
+                  ),
+                ),
+              ],
+            ),
+
             const SizedBox(height: 20),
 
             /// LAST INVOICE CARD
@@ -366,6 +400,10 @@ class _CustomerProductInsightScreenState
                 ],
               ),
             ),
+
+            const SizedBox(height: 18),
+
+            _buildProductListCard(),
 
             const SizedBox(height: 18),
 
@@ -686,5 +724,205 @@ class _CustomerProductInsightScreenState
     );
 
   }
+Widget _buildProductListCard() {
+  return Container(
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(18),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(.08),
+          blurRadius: 8,
+        ),
+      ],
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+
+        const Row(
+          children: [
+
+            Icon(
+              Icons.shopping_bag,
+              color: Colors.green,
+            ),
+
+            SizedBox(width: 8),
+
+            Text(
+              "Products Purchased",
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 15),
+
+        ...productList.map((item) {
+
+          final bool isCurrent =
+              item["ProductName"] == data!["ProductName"];
+
+          return Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(14),
+
+            decoration: BoxDecoration(
+              color: isCurrent
+                  ? Colors.green.shade50
+                  : Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isCurrent
+                    ? Colors.green
+                    : Colors.grey.shade300,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(.05),
+                  blurRadius: 5,
+                ),
+              ],
+            ),
+
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+
+                CircleAvatar(
+                  radius: 20,
+                  backgroundColor: isCurrent
+                      ? Colors.green.shade100
+                      : Colors.blue.shade50,
+                  child: Icon(
+                    Icons.inventory_2,
+                    color: isCurrent
+                        ? Colors.green
+                        : Colors.blue,
+                  ),
+                ),
+
+                const SizedBox(width: 12),
+
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment:
+                        CrossAxisAlignment.start,
+                    children: [
+
+                      Text(
+                        item["ProductName"],
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                          color: isCurrent
+                              ? Colors.green.shade800
+                              : Colors.black87,
+                        ),
+                      ),
+
+                      const SizedBox(height: 8),
+
+                      Row(
+                        children: [
+
+                          const Icon(
+                            Icons.scale,
+                            size: 14,
+                            color: Colors.grey,
+                          ),
+
+                          const SizedBox(width: 4),
+
+                          Text(
+                            "${item["Qty"]} MT",
+                            style: const TextStyle(
+                              color: Colors.grey,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+
+                          const Spacer(),
+
+                          Text(
+                            amount(
+                              double.parse(
+                                item["Amount"].toString(),
+                              ),
+                            ),
+                            style: const TextStyle(
+                              color: Colors.green,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 8),
+
+                      Row(
+                        children: [
+
+                          const Icon(
+                            Icons.schedule,
+                            size: 14,
+                            color: Colors.orange,
+                          ),
+
+                          const SizedBox(width: 4),
+
+                          Text(
+                            "${item["LastPurchaseDays"]} Days Ago",
+                            style: const TextStyle(
+                              color: Colors.orange,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                            ),
+                          ),
+
+                          const Spacer(),
+
+                          if (isCurrent)
+                            Container(
+                              padding:
+                                  const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.green,
+                                borderRadius:
+                                    BorderRadius.circular(20),
+                              ),
+                              child: const Text(
+                                "Current",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
+      ],
+    ),
+  );
+}
 
 }

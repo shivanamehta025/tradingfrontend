@@ -1036,7 +1036,8 @@ static Future<List<dynamic>> getProductCustomerInsight({
   );
 
   if (response.statusCode == 200) {
-    return jsonDecode(response.body);
+    print(response.body);
+    return jsonDecode(response.body) as List<dynamic>;
   } else {
     throw Exception("Failed to load customer insight");
   }
@@ -1065,6 +1066,30 @@ static Future<List<dynamic>> getCustomerProductTrend({
     return jsonDecode(response.body);
   } else {
     throw Exception("Failed to load monthly trend");
+  }
+}
+
+static Future<List<dynamic>> getProductCustomerAnalysis({
+  required String databaseName,
+  required String userId,
+  required String productId,
+}) async {
+  final response = await http.post(
+    Uri.parse('$baseUrl/api/product-customer-analysis'),
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: jsonEncode({
+      "databaseName": databaseName,
+      "userId": userId,
+      "productId": productId,
+    }),
+  );
+
+  if (response.statusCode == 200) {
+    return jsonDecode(response.body);
+  } else {
+    throw Exception("Failed to load customer analysis");
   }
 }
 

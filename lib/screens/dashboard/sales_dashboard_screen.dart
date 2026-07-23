@@ -1870,7 +1870,7 @@ Widget _buildCategoryAlertCard() {
 
                 children: [
                   Text(
-                    "Categories Needing Attention",
+                    "Products Needing Attention",
                     style: TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.bold,

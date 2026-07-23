@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../services/api_service.dart';
 import '../../utils/app_config.dart';
+import 'product_customer_analysis_screen.dart';
 
 class ProductGrowthDetailsScreen extends StatefulWidget {
   final String period;
@@ -342,7 +343,7 @@ class _ProductGrowthDetailsScreenState
               title: "Till Date Qty",
               value: "${_qty(p["TillDateQty"])} MT",
             ),
-
+if (widget.period.toUpperCase() == "MTD") ...[
             _analyticsRow(
               icon: Icons.functions,
               title: "Avg Monthly Qty",
@@ -357,20 +358,78 @@ class _ProductGrowthDetailsScreenState
                   "${_qty(p["CurrentMonthQty"])} MT",
             ),
 
-            _percentageRow(
-              title: "Vs Monthly Average",
-              value:
-                  _toDouble(p["VsMonthlyAvgPercent"]),
-            ),
+           _percentageRow(
+  title: "Vs Monthly Average",
+  value: _toDouble(p["VsMonthlyAvgPercent"]),
+),
+],
 
-            const Divider(height: 22),
+if (widget.period.toUpperCase() == "QTD") ...[
+const Divider(height: 22),
 
-            _analyticsRow(
-              icon: Icons.calculate_outlined,
-              title: "Avg Quarterly Qty",
-              value:
-                  "${_qty(p["AvgQuarterlyQty"])} MT",
-            ),
+_sectionTitle(
+  Icons.pie_chart,
+  "Last FY Quarter-wise Qty",
+  Colors.indigo,
+),
+
+const SizedBox(height: 10),
+
+Row(
+  children: [
+    Expanded(
+      child: _summaryBox(
+        title: "Q1",
+        value: "${_qty(p["Q1Qty"])} MT",
+        icon: Icons.looks_one,
+        color: Colors.indigo,
+      ),
+    ),
+    const SizedBox(width: 8),
+    Expanded(
+      child: _summaryBox(
+        title: "Q2",
+        value: "${_qty(p["Q2Qty"])} MT",
+        icon: Icons.looks_two,
+        color: Colors.indigo,
+      ),
+    ),
+  ],
+),
+
+const SizedBox(height: 8),
+
+Row(
+  children: [
+    Expanded(
+      child: _summaryBox(
+        title: "Q3",
+        value: "${_qty(p["Q3Qty"])} MT",
+        icon: Icons.looks_3,
+        color: Colors.indigo,
+      ),
+    ),
+    const SizedBox(width: 8),
+    Expanded(
+      child: _summaryBox(
+        title: "Q4",
+        value: "${_qty(p["Q4Qty"])} MT",
+        icon: Icons.looks_4,
+        color: Colors.indigo,
+      ),
+    ),
+  ],
+),
+],
+
+if (widget.period.toUpperCase() == "QTD") ...[
+const Divider(height: 22),
+
+_analyticsRow(
+  icon: Icons.calculate_outlined,
+  title: "Avg Quarterly Qty",
+  value: "${_qty(p["AvgQuarterlyQty"])} MT",
+),
 
             _analyticsRow(
               icon: Icons.pie_chart_outline,
@@ -384,7 +443,30 @@ class _ProductGrowthDetailsScreenState
               value:
                   _toDouble(p["VsQuarterlyAvgPercent"]),
             ),
-          ],
+],
+            const SizedBox(height: 16),
+if (widget.period.toUpperCase() == "YTD") ...[
+         SizedBox(
+    width: double.infinity,
+    child: ElevatedButton.icon(
+      onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ProductCustomerAnalysisScreen(
+              productId: p["productcode"].toString(),
+              productName: p["ProductName"].toString(),
+            ),
+          ),
+        );
+      },
+      icon: const Icon(Icons.people),
+      label: const Text("View Customers"),
+    ),
+  ),
+],
+],
+
         ),
       ),
     );
